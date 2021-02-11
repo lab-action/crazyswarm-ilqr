@@ -73,6 +73,7 @@ struct pose {
 };
 
 static stateVector CFState;
+static stateVector prevState;
 static stateVector stateWindowBuf[SMA_WINDOW_LEN];
 
 static pose currentPose;
@@ -167,6 +168,7 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 
     }
 
+/* Simple moving average filter */
 #if (USE_SMA_FILTER == 1)
 
     stateWindowBuf[0] = CFState;
@@ -180,17 +182,17 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 
     for (int idx = 0; idx < SMA_WINDOW_LEN; ++idx) {
         CFState.x += stateWindowBuf[idx].x;
-	CFState.y += stateWindowBuf[idx].y;
-	CFState.z += stateWindowBuf[idx].z;
+    	CFState.y += stateWindowBuf[idx].y;
+    	CFState.z += stateWindowBuf[idx].z;
         CFState.roll += stateWindowBuf[idx].roll;
-	CFState.pitch += stateWindowBuf[idx].pitch;
-	CFState.yaw += stateWindowBuf[idx].yaw;
+    	CFState.pitch += stateWindowBuf[idx].pitch;
+    	CFState.yaw += stateWindowBuf[idx].yaw;
         CFState.x_d += stateWindowBuf[idx].x_d;
-	CFState.y_d += stateWindowBuf[idx].y_d;
-	CFState.z_d += stateWindowBuf[idx].z_d;
-	CFState.roll_d += stateWindowBuf[idx].roll_d;
-	CFState.pitch_d += stateWindowBuf[idx].pitch_d;
-	CFState.yaw_d += stateWindowBuf[idx].yaw_d;
+    	CFState.y_d += stateWindowBuf[idx].y_d;
+    	CFState.z_d += stateWindowBuf[idx].z_d;
+    	CFState.roll_d += stateWindowBuf[idx].roll_d;
+    	CFState.pitch_d += stateWindowBuf[idx].pitch_d;
+    	CFState.yaw_d += stateWindowBuf[idx].yaw_d;
     }
 
     CFState.x = CFState.x / ((float) SMA_WINDOW_LEN);
@@ -205,6 +207,27 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     CFState.roll_d = CFState.roll_d / ((float) SMA_WINDOW_LEN);
     CFState.pitch_d = CFState.pitch_d / ((float) SMA_WINDOW_LEN);
     CFState.yaw_d = CFState.yaw_d / ((float) SMA_WINDOW_LEN);
+
+#endif
+
+
+/* First order exponential low-pass filter */
+#if (USE_EXP_FILTER == 1)
+
+    CFState.x = (prevState.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.x;
+    CFState.y = (prevState.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.y;
+    CFState.z = (prevState.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.z;
+    CFState.roll = (prevState.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.roll;
+    CFState.pitch = (prevState.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.pitch;
+    CFState.yaw = (prevState.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.yaw;
+    CFState.x_d = (prevState.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.x_d;
+    CFState.y_d = (prevState.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.y_d;
+    CFState.z_d = (prevState.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.z_d;
+    CFState.roll_d = (prevState.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.roll_d;
+    CFState.pitch_d = (prevState.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.pitch_d;
+    CFState.yaw_d = (prevState.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.yaw_d;
+
+    prevState = CFState;
 
 #endif
 
