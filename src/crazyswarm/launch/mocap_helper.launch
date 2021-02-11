@@ -5,7 +5,8 @@
     <rosparam>
       # tracking
       motion_capture_type: "vicon" # one of vicon,optitrack,qualisys,vrpn
-      object_tracking_type: "libobjecttracker" # one of motionCapture,libobjecttracker
+      <!-- object_tracking_type: "libobjecttracker" # one of motionCapture,libobjecttracker -->
+      object_tracking_type: "motionCapture"
       vicon_host_name: "192.168.1.2:801"
       optitrack_host_name: "optitrack"
       # qualisys_host_name: "10.0.5.219"

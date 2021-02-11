@@ -72,141 +72,240 @@ struct pose {
     unsigned long timeStamp;
 };
 
-static stateVector CFState;
-static stateVector prevState;
-static stateVector stateWindowBuf[SMA_WINDOW_LEN];
+static stateVector CFState_cf1;
+static stateVector prevState_cf1;
+static stateVector stateWindowBuf_cf1[SMA_WINDOW_LEN];
 
-static pose currentPose;
-static pose prevPose;
+static stateVector CFState_cf2;
+static stateVector prevState_cf2;
+static stateVector stateWindowBuf_cf2[SMA_WINDOW_LEN];
+
+static pose currentPose_cf1;
+static pose prevPose_cf1;
+
+static pose currentPose_cf2;
+static pose prevPose_cf2;
+
 bool first = true;
 
-void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
+void poseCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 
-    // ROS_INFO("##### /tf MESSAGE RECEIVED #####");
+    /* Collect pose and timestamp information for CF1 */
+    static int secs_cf1 = msg->transforms[0].header.stamp.sec;
+    static int nsecs_cf1 = msg->transforms[0].header.stamp.nsec;
+    static float x_cf1 = msg->transforms[0].transform.translation.x;
+    static float y_cf1 = msg->transforms[0].transform.translation.y;
+    static float z_cf1 = msg->transforms[0].transform.translation.z;
+    static float qx_cf1 = msg->transforms[0].transform.rotation.x;
+    static float qy_cf1 = msg->transforms[0].transform.rotation.y;
+    static float qz_cf1 = msg->transforms[0].transform.rotation.z;
+    static float qw_cf1 = msg->transforms[0].transform.rotation.w;
+    static tf2::Quaternion q_cf1(qx_cf1, qy_cf1, qz_cf1, qw_cf1);
 
-    // std::cout << msg->transforms[0].transform.translation.x << ", "
-    // << msg->transforms[0].transform.translation.y << ", "
-    // << msg->transforms[0].transform.translation.z << std::endl;
+    /* Quaternion to roll,pitch,yaw conversion for CF1 */
+    static double roll_cf1, pitch_cf1, yaw_cf1;
+    static tf2::Matrix3x3 m_cf1(q_cf1);
+    m_cf1.getRPY(roll_cf1, pitch_cf1, yaw_cf1);
 
-    float x = msg->transforms[0].transform.translation.x;
-    float y = msg->transforms[0].transform.translation.y;
-    float z = msg->transforms[0].transform.translation.z;
+    /* Calculate timestamp in nanoseconds for CF2 */
+    static unsigned long timeStamp_cf1 = (secs_cf1 * 1e9) + nsecs_cf1;
+    static double deltaT_cf1 = 0.0;
 
-    float qx = msg->transforms[0].transform.rotation.x;
-    float qy = msg->transforms[0].transform.rotation.y;
-    float qz = msg->transforms[0].transform.rotation.z;
-    float qw = msg->transforms[0].transform.rotation.w;
-    tf2::Quaternion q(qx, qy, qz, qw);
+    /* Collect pose and timestamp information for CF2 */
+    static int secs_cf2 = msg->transforms[1].header.stamp.sec;
+    static int nsecs_cf2 = msg->transforms[1].header.stamp.nsec;
+    static float x_cf2 = msg->transforms[1].transform.translation.x;
+    static float y_cf2 = msg->transforms[1].transform.translation.y;
+    static float z_cf2 = msg->transforms[1].transform.translation.z;
+    static float qx_cf2 = msg->transforms[1].transform.rotation.x;
+    static float qy_cf2 = msg->transforms[1].transform.rotation.y;
+    static float qz_cf2 = msg->transforms[1].transform.rotation.z;
+    static float qw_cf2 = msg->transforms[1].transform.rotation.w;
+    static tf2::Quaternion q_cf2(qx_cf2, qy_cf2, qz_cf2, qw_cf2);
 
-    /* Quaternion to roll,pitch,yaw conversion */
-    double roll, pitch, yaw;
-    tf2::Matrix3x3 m(q);
-    m.getRPY(roll, pitch, yaw);
+    /* Quaternion to roll,pitch,yaw conversion for CF2 */
+    static double roll_cf2, pitch_cf2, yaw_cf2;
+    static tf2::Matrix3x3 m_cf2(q_cf2);
+    m_cf2.getRPY(roll_cf2, pitch_cf2, yaw_cf2);
 
-    int secs = msg->transforms[0].header.stamp.sec;
-    int nsecs = msg->transforms[0].header.stamp.nsec;
-
-    /* Calculate timestamp in nanoseconds */
-    unsigned long timeStamp = (secs * 1e9) + nsecs;
-
-    double deltaT = 0.0;
+    /* Calculate timestamp in nanoseconds for CF2 */
+    static unsigned long timeStamp_cf2 = (secs_cf2 * 1e9) + nsecs_cf2;
+    static double deltaT_cf2 = 0.0;
 
     if (first == true) {
 
-        currentPose.x = x;
-        currentPose.y = y;
-        currentPose.z = z;
-        currentPose.roll = roll;
-        currentPose.pitch = pitch;
-        currentPose.yaw = yaw;
-        currentPose.timeStamp = timeStamp;
+        /* currentPose and prevPose initial update for CF1 */
+        currentPose_cf1.x = x_cf1;
+        currentPose_cf1.y = y_cf1;
+        currentPose_cf1.z = z_cf1;
+        currentPose_cf1.roll = roll_cf1;
+        currentPose_cf1.pitch = pitch_cf1;
+        currentPose_cf1.yaw = yaw_cf1;
+        currentPose_cf1.timeStamp = timeStamp_cf1;
+        prevPose_cf1.x = x_cf1;
+        prevPose_cf1.y = y_cf1;
+        prevPose_cf1.z = z_cf1;
+        prevPose_cf1.roll = roll_cf1;
+        prevPose_cf1.pitch = pitch_cf1;
+        prevPose_cf1.yaw = yaw_cf1;
+        prevPose_cf1.timeStamp = timeStamp_cf1;
 
-        prevPose.x = x;
-        prevPose.y = y;
-        prevPose.z = z;
-        prevPose.roll = roll;
-        prevPose.pitch = pitch;
-        prevPose.yaw = yaw;
-        prevPose.timeStamp = timeStamp;
+        /* Set state vector to first state callback for CF1 */
+        CFState_cf1.x = x_cf1;
+        CFState_cf1.y = y_cf1;
+        CFState_cf1.z = z_cf1;
+        CFState_cf1.roll = roll_cf1;
+        CFState_cf1.pitch = pitch_cf1;
+        CFState_cf1.yaw = yaw_cf1;
 
-        /* Set initial conditions to first read state callback */
-        CFState.x = x;
-        CFState.y = y;
-        CFState.z = z;
-        CFState.roll = roll;
-        CFState.pitch = pitch;
-        CFState.yaw = yaw;
+        /* currentPose and prevPose initial update for CF2 */
+        currentPose_cf1.x = x_cf2;
+        currentPose_cf2.y = y_cf2;
+        currentPose_cf2.z = z_cf2;
+        currentPose_cf2.roll = roll_cf2;
+        currentPose_cf2.pitch = pitch_cf2;
+        currentPose_cf2.yaw = yaw_cf2;
+        currentPose_cf2.timeStamp = timeStamp_cf2;
+        prevPose_cf2.x = x_cf2;
+        prevPose_cf2.y = y_cf2;
+        prevPose_cf2.z = z_cf2;
+        prevPose_cf2.roll = roll_cf2;
+        prevPose_cf2.pitch = pitch_cf2;
+        prevPose_cf2.yaw = yaw_cf2;
+        prevPose_cf2.timeStamp = timeStamp_cf2;
+
+        /* Set state vector to first state callback for CF2 */
+        CFState_cf2.x = x_cf2;
+        CFState_cf2.y = y_cf2;
+        CFState_cf2.z = z_cf2;
+        CFState_cf2.roll = roll_cf2;
+        CFState_cf2.pitch = pitch_cf2;
+        CFState_cf2.yaw = yaw_cf2;
 
         first = false;
 
     } else {
 
-        currentPose.x = x;
-        currentPose.y = y;
-        currentPose.z = z;
-        currentPose.roll = roll;
-        currentPose.pitch = pitch;
-        currentPose.yaw = yaw;
-        currentPose.timeStamp = timeStamp;
+        /* Update instantaneous state and pose information for CF1 */
+        currentPose_cf1.x = x_cf1;
+        currentPose_cf1.y = y_cf1;
+        currentPose_cf1.z = z_cf1;
+        currentPose_cf1.roll = roll_cf1;
+        currentPose_cf1.pitch = pitch_cf1;
+        currentPose_cf1.yaw = yaw_cf1;
+        currentPose_cf1.timeStamp = timeStamp_cf1;
+        deltaT_cf1 = (currentPose_cf1.timeStamp - prevPose_cf1.timeStamp) * 1e-9;
+        CFState_cf1.x = x_cf1;
+        CFState_cf1.y = y_cf1;
+        CFState_cf1.z = z_cf1;
+        CFState_cf1.roll = roll_cf1;
+        CFState_cf1.pitch = pitch_cf1;
+        CFState_cf1.yaw = yaw_cf1;
+        CFState_cf1.x_d = (currentPose_cf1.x - prevPose_cf1.x) / deltaT_cf1;
+        CFState_cf1.y_d = (currentPose_cf1.y - prevPose_cf1.y) / deltaT_cf1;
+        CFState_cf1.z_d = (currentPose_cf1.z - prevPose_cf1.z) / deltaT_cf1;
+        CFState_cf1.roll_d = (currentPose_cf1.roll - prevPose_cf1.roll) / deltaT_cf1;
+        CFState_cf1.pitch_d = (currentPose_cf1.pitch - prevPose_cf1.pitch) / deltaT_cf1;
+        CFState_cf1.yaw_d = (currentPose_cf1.yaw - prevPose_cf1.yaw) / deltaT_cf1;
 
-        deltaT = (currentPose.timeStamp - prevPose.timeStamp) * 1e-9;
+        prevPose_cf1 = currentPose_cf1;
 
-        CFState.x = x;
-        CFState.y = y;
-        CFState.z = z;
-        CFState.roll = roll;
-        CFState.pitch = pitch;
-        CFState.yaw = yaw;
-        CFState.x_d = (currentPose.x - prevPose.x) / deltaT;
-        CFState.y_d = (currentPose.y - prevPose.y) / deltaT;
-        CFState.z_d = (currentPose.z - prevPose.z) / deltaT;
-        CFState.roll_d = (currentPose.roll - prevPose.roll) / deltaT;
-        CFState.pitch_d = (currentPose.pitch - prevPose.pitch) / deltaT;
-        CFState.yaw_d = (currentPose.yaw - prevPose.yaw) / deltaT;
+        /* Update instantaneous state and pose information for CF2 */
+        currentPose_cf2.x = x_cf2;
+        currentPose_cf2.y = y_cf2;
+        currentPose_cf2.z = z_cf2;
+        currentPose_cf2.roll = roll_cf2;
+        currentPose_cf2.pitch = pitch_cf2;
+        currentPose_cf2.yaw = yaw_cf2;
+        currentPose_cf2.timeStamp = timeStamp_cf2;
+        deltaT_cf2 = (currentPose_cf2.timeStamp - prevPose_cf2.timeStamp) * 1e-9;
+        CFState_cf2.x = x_cf2;
+        CFState_cf2.y = y_cf2;
+        CFState_cf2.z = z_cf2;
+        CFState_cf2.roll = roll_cf2;
+        CFState_cf2.pitch = pitch_cf2;
+        CFState_cf2.yaw = yaw_cf2;
+        CFState_cf2.x_d = (currentPose_cf2.x - prevPose_cf2.x) / deltaT_cf2;
+        CFState_cf2.y_d = (currentPose_cf2.y - prevPose_cf2.y) / deltaT_cf2;
+        CFState_cf2.z_d = (currentPose_cf2.z - prevPose_cf2.z) / deltaT_cf2;
+        CFState_cf2.roll_d = (currentPose_cf2.roll - prevPose_cf2.roll) / deltaT_cf2;
+        CFState_cf2.pitch_d = (currentPose_cf2.pitch - prevPose_cf2.pitch) / deltaT_cf2;
+        CFState_cf2.yaw_d = (currentPose_cf2.yaw - prevPose_cf2.yaw) / deltaT_cf2;
 
-        prevPose = currentPose;
-
+        prevPose_cf2 = currentPose_cf2;
     }
 
 /* Simple moving average filter */
 #if (USE_SMA_FILTER == 1)
 
-    stateWindowBuf[0] = CFState;
-
+    /* Propogate state measurements */
     for (int idx = 1; idx < SMA_WINDOW_LEN; ++idx) {
-        stateWindowBuf[idx] = stateWindowBuf[idx-1];
+        stateWindowBuf_cf1[idx] = stateWindowBuf_cf1[idx-1];
+        stateWindowBuf_cf2[idx] = stateWindowBuf_cf2[idx-1];
     }
 
-    /* Set CFState member to 0 */
-    memset(&CFState, 0x00, sizeof(stateVector));
+    /* Append current state to head of buffer */
+    stateWindowBuf_cf1[0] = CFState_cf1;
+    stateWindowBuf_cf2[0] = CFState_cf2;
 
+    /* Set all state variables to zero */
+    memset(&CFState_cf1, 0x00, sizeof(stateVector));
+    memset(&CFState_cf2, 0x00, sizeof(stateVector));
+
+    /* Accumulate state variables */
     for (int idx = 0; idx < SMA_WINDOW_LEN; ++idx) {
-        CFState.x += stateWindowBuf[idx].x;
-    	CFState.y += stateWindowBuf[idx].y;
-    	CFState.z += stateWindowBuf[idx].z;
-        CFState.roll += stateWindowBuf[idx].roll;
-    	CFState.pitch += stateWindowBuf[idx].pitch;
-    	CFState.yaw += stateWindowBuf[idx].yaw;
-        CFState.x_d += stateWindowBuf[idx].x_d;
-    	CFState.y_d += stateWindowBuf[idx].y_d;
-    	CFState.z_d += stateWindowBuf[idx].z_d;
-    	CFState.roll_d += stateWindowBuf[idx].roll_d;
-    	CFState.pitch_d += stateWindowBuf[idx].pitch_d;
-    	CFState.yaw_d += stateWindowBuf[idx].yaw_d;
+        CFState_cf1.x += stateWindowBuf_cf1[idx].x;
+    	CFState_cf1.y += stateWindowBuf_cf1[idx].y;
+    	CFState_cf1.z += stateWindowBuf_cf1[idx].z;
+        CFState_cf1.roll += stateWindowBuf_cf1[idx].roll;
+    	CFState_cf1.pitch += stateWindowBuf_cf1[idx].pitch;
+    	CFState_cf1.yaw += stateWindowBuf_cf1[idx].yaw;
+        CFState_cf1.x_d += stateWindowBuf_cf1[idx].x_d;
+    	CFState_cf1.y_d += stateWindowBuf_cf1[idx].y_d;
+    	CFState_cf1.z_d += stateWindowBuf_cf1[idx].z_d;
+    	CFState_cf1.roll_d += stateWindowBuf_cf1[idx].roll_d;
+    	CFState_cf1.pitch_d += stateWindowBuf_cf1[idx].pitch_d;
+    	CFState_cf1.yaw_d += stateWindowBuf_cf1[idx].yaw_d;
+
+        CFState_cf2.x += stateWindowBuf_cf2[idx].x;
+    	CFState_cf2.y += stateWindowBuf_cf2[idx].y;
+    	CFState_cf2.z += stateWindowBuf_cf2[idx].z;
+        CFState_cf2.roll += stateWindowBuf_cf2[idx].roll;
+    	CFState_cf2.pitch += stateWindowBuf_cf2[idx].pitch;
+    	CFState_cf2.yaw += stateWindowBuf_cf2[idx].yaw;
+        CFState_cf2.x_d += stateWindowBuf_cf2[idx].x_d;
+    	CFState_cf2.y_d += stateWindowBuf_cf2[idx].y_d;
+    	CFState_cf2.z_d += stateWindowBuf_cf2[idx].z_d;
+    	CFState_cf2.roll_d += stateWindowBuf_cf2[idx].roll_d;
+    	CFState_cf2.pitch_d += stateWindowBuf_cf2[idx].pitch_d;
+    	CFState_cf2.yaw_d += stateWindowBuf_cf2[idx].yaw_d;
     }
 
-    CFState.x = CFState.x / ((float) SMA_WINDOW_LEN);
-    CFState.y = CFState.y / ((float) SMA_WINDOW_LEN);
-    CFState.z = CFState.z / ((float) SMA_WINDOW_LEN);
-    CFState.x = CFState.roll / ((float) SMA_WINDOW_LEN);
-    CFState.y = CFState.pitch / ((float) SMA_WINDOW_LEN);
-    CFState.z = CFState.yaw / ((float) SMA_WINDOW_LEN);
-    CFState.x_d = CFState.x_d / ((float) SMA_WINDOW_LEN);
-    CFState.y_d = CFState.y_d / ((float) SMA_WINDOW_LEN);
-    CFState.z_d = CFState.z_d / ((float) SMA_WINDOW_LEN);
-    CFState.roll_d = CFState.roll_d / ((float) SMA_WINDOW_LEN);
-    CFState.pitch_d = CFState.pitch_d / ((float) SMA_WINDOW_LEN);
-    CFState.yaw_d = CFState.yaw_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.x = CFState_cf1.x / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.y = CFState_cf1.y / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.z = CFState_cf1.z / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.x = CFState_cf1.roll / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.y = CFState_cf1.pitch / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.z = CFState_cf1.yaw / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.x_d = CFState_cf1.x_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.y_d = CFState_cf1.y_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.z_d = CFState_cf1.z_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.roll_d = CFState_cf1.roll_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.pitch_d = CFState_cf1.pitch_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf1.yaw_d = CFState_cf1.yaw_d / ((float) SMA_WINDOW_LEN);
+
+    CFState_cf2.x = CFState_cf2.x / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.y = CFState_cf2.y / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.z = CFState_cf2.z / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.x = CFState_cf2.roll / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.y = CFState_cf2.pitch / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.z = CFState_cf2.yaw / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.x_d = CFState_cf2.x_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.y_d = CFState_cf2.y_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.z_d = CFState_cf2.z_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.roll_d = CFState_cf2.roll_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.pitch_d = CFState_cf2.pitch_d / ((float) SMA_WINDOW_LEN);
+    CFState_cf2.yaw_d = CFState_cf2.yaw_d / ((float) SMA_WINDOW_LEN);
 
 #endif
 
@@ -214,40 +313,50 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 /* First order exponential low-pass filter */
 #if (USE_EXP_FILTER == 1)
 
-    CFState.x = (prevState.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.x;
-    CFState.y = (prevState.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.y;
-    CFState.z = (prevState.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.z;
-    CFState.roll = (prevState.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.roll;
-    CFState.pitch = (prevState.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.pitch;
-    CFState.yaw = (prevState.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.yaw;
-    CFState.x_d = (prevState.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.x_d;
-    CFState.y_d = (prevState.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.y_d;
-    CFState.z_d = (prevState.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.z_d;
-    CFState.roll_d = (prevState.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.roll_d;
-    CFState.pitch_d = (prevState.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.pitch_d;
-    CFState.yaw_d = (prevState.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState.yaw_d;
+    CFState_cf1.x = (prevState_cf1.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.x;
+    CFState_cf1.y = (prevState_cf1.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.y;
+    CFState_cf1.z = (prevState_cf1.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.z;
+    CFState_cf1.roll = (prevState_cf1.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.roll;
+    CFState_cf1.pitch = (prevState_cf1.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.pitch;
+    CFState_cf1.yaw = (prevState_cf1.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.yaw;
+    CFState_cf1.x_d = (prevState_cf1.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.x_d;
+    CFState_cf1.y_d = (prevState_cf1.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.y_d;
+    CFState_cf1.z_d = (prevState_cf1.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.z_d;
+    CFState_cf1.roll_d = (prevState_cf1.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.roll_d;
+    CFState_cf1.pitch_d = (prevState_cf1.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.pitch_d;
+    CFState_cf1.yaw_d = (prevState_cf1.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf1.yaw_d;
 
-    prevState = CFState;
+    CFState_cf2.x = (prevState_cf2.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x;
+    CFState_cf2.y = (prevState_cf2.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y;
+    CFState_cf2.z = (prevState_cf2.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z;
+    CFState_cf2.roll = (prevState_cf2.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll;
+    CFState_cf2.pitch = (prevState_cf2.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch;
+    CFState_cf2.yaw = (prevState_cf2.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw;
+    CFState_cf2.x_d = (prevState_cf2.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x_d;
+    CFState_cf2.y_d = (prevState_cf2.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y_d;
+    CFState_cf2.z_d = (prevState_cf2.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z_d;
+    CFState_cf2.roll_d = (prevState_cf2.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll_d;
+    CFState_cf2.pitch_d = (prevState_cf2.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch_d;
+    CFState_cf2.yaw_d = (prevState_cf2.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw_d;
+
+    prevState_cf1 = CFState_cf1;
+    prevState_cf2 = CFState_cf2;
 
 #endif
 
 
-    std::printf("\n\n");
-    std::printf("##### CALLBACK\n");
-
-    std::printf("timeStamp: %lu\n", timeStamp);
-    std::printf("deltaT: %f\n", deltaT);
-
-    std::printf("X: %f,\t Y: %f,\t Z: %f\t\n ROLL: %f,\t PITCH: %f,\t YAW %f\n",
-                CFState.x, CFState.y, CFState.z, CFState.roll, CFState.pitch, CFState.yaw);
-
-    std::printf("X_d: %f\t, Y_d: %f\t, Z_d: %f\t\nROLL_d: %f\t, PITCH_d: %f\t, YAW_d %f\n",
-                CFState.x_d, CFState.y_d, CFState.z_d, CFState.roll_d, CFState.pitch_d, CFState.yaw_d);
+    // std::printf("\n\n");
+    // std::printf("##### CALLBACK\n");
+    // std::printf("timeStamp: %lu\n", timeStamp);
+    // std::printf("deltaT: %f\n", deltaT);
+    // std::printf("X: %f,\t Y: %f,\t Z: %f\t\n ROLL: %f,\t PITCH: %f,\t YAW %f\n",
+    //             CFState_cf1.x, CFState_cf1.y, CFState_cf1.z, CFState_cf1.roll, CFState_cf1.pitch, CFState_cf1.yaw);
+    // std::printf("X_d: %f\t, Y_d: %f\t, Z_d: %f\t\nROLL_d: %f\t, PITCH_d: %f\t, YAW_d %f\n",
+    //             CFState_cf1.x_d, CFState_cf1.y_d, CFState_cf1.z_d, CFState_cf1.roll_d, CFState_cf1.pitch_d, CFState_cf1.yaw_d);
 }
 
 /* Modification of getch() to be non-blocking */
-int getch()
-{
+int getch() {
   static struct termios oldt, newt;
   tcgetattr( STDIN_FILENO, &oldt);           // save old settings
   newt = oldt;
@@ -266,7 +375,7 @@ int main(int argc, char **argv) {
 
     ros::NodeHandle n;
 
-    ros::Subscriber state_subscriber = n.subscribe("tf", 1000, callback);
+    ros::Subscriber state_subscriber = n.subscribe("tf", 1000, poseCallback);
 
     /* Publisher to cmd_position topic (currently doesn't work) */
     // ros::Publisher pub = n.advertise<crazyflie_driver::Position>("cf1/cmd_position",1);
@@ -275,21 +384,34 @@ int main(int argc, char **argv) {
     /* Service clients for simple high-level commands */
     ros::ServiceClient takeoffClient = n.serviceClient<crazyflie_driver::Takeoff>("/takeoff");
     ros::ServiceClient landClient = n.serviceClient<crazyflie_driver::Land>("/land");
-    ros::ServiceClient GoToClient = n.serviceClient<crazyflie_driver::GoTo>("/cf1/go_to");
+    ros::ServiceClient GoToClient_cf1 = n.serviceClient<crazyflie_driver::GoTo>("/cf1/go_to");
+    ros::ServiceClient GoToClient_cf2 = n.serviceClient<crazyflie_driver::GoTo>("/cf2/go_to");
 
+    /* Wait for <Enter> key press to begin mission */
+    std::cout << "\t##### PRESS <Enter> TO BEGIN MISSION #####" << std::endl;
+    while (true) {
+        int c = getch();
+            if (c == '\n') {
+                std::cout << "\t##### BEGINNING MISSION #####" << std::endl;
+                break;
+            }
+            ros::spinOnce();
+    }
 
     /* Send takeoff command through /Takeoff service */
     crazyflie_driver::Takeoff srvTakeoff;
     srvTakeoff.request.groupMask = 0;
     srvTakeoff.request.height = 0.5;
-    srvTakeoff.request.duration = ros::Duration(6.0);
+    srvTakeoff.request.duration = ros::Duration(3.0);
     takeoffClient.call(srvTakeoff);
 
     ros::Duration(5.0).sleep();
 
     /* Construct GoTo service once to be used in loop */
-    crazyflie_driver::GoTo srvGoTo;
-    srvGoTo.request.groupMask = 0;  // signal all CFs (I think?)
+    crazyflie_driver::GoTo srvGoTo_cf1;
+    srvGoTo_cf1.request.groupMask = 0;  // signal all CFs (I think?)
+    crazyflie_driver::GoTo srvGoTo_cf2;
+    srvGoTo_cf2.request.groupMask = 0;
 
     /* iLQR solver parameters */
     constexpr size_t horizon=5;
@@ -338,7 +460,7 @@ int main(int argc, char **argv) {
         ros::spinOnce();
 
         /* populate state vector with current state */
-        x0_integrator << CFState.x, CFState.y, CFState.z;
+        x0_integrator << CFState_cf1.x, CFState_cf1.y, CFState_cf1.z;
 
         /* run iLQR algorithm */
 		soln_integrator = integrator_solver.run_MPC(x0_integrator,
@@ -356,18 +478,25 @@ int main(int argc, char **argv) {
         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_integrator.first[4][0], soln_integrator.first[4][1], soln_integrator.first[4][2]);
 
         /* Populate GoTo command with waypoint and call service */
-        srvGoTo.request.goal.x = soln_integrator.first[4][0];
-        srvGoTo.request.goal.y = soln_integrator.first[4][1];
-        srvGoTo.request.goal.z = soln_integrator.first[4][2];
-        srvGoTo.request.yaw = 0.0;
-        srvGoTo.request.duration = ros::Duration(3.0);
-        GoToClient.call(srvGoTo);
+        srvGoTo_cf1.request.goal.x = soln_integrator.first[4][0];
+        srvGoTo_cf1.request.goal.y = soln_integrator.first[4][1];
+        srvGoTo_cf1.request.goal.z = soln_integrator.first[4][2];
+        srvGoTo_cf1.request.yaw = 0.0;
+        srvGoTo_cf1.request.duration = ros::Duration(3.0);
+        GoToClient_cf1.call(srvGoTo_cf1);
+
+        // srvGoTo_cf2.request.goal.x = soln_integrator.first[4][0];
+        // srvGoTo_cf2.request.goal.y = soln_integrator.first[4][1];
+        // srvGoTo_cf2.request.goal.z = soln_integrator.first[4][2];
+        // srvGoTo_cf2.request.yaw = 0.0;
+        // srvGoTo_cf2.request.duration = ros::Duration(3.0);
+        // GoToClient_cf2.call(srvGoTo_cf2);
 
 
         /* Check if <Enter> key way pressed */
         int c = getch();
         if (c == '\n') {
-            std::cout << "LANDING" << std::endl;
+            std::cout << "\t##### LANDING #####" << std::endl;
             break;
         }
 
@@ -445,10 +574,10 @@ int main(int argc, char **argv) {
 //
 //         ros::spinOnce();
 // ////
-//         X0_drone << CFState.x, CFState.y, CFState.z,
-//                     CFState.roll, CFState.pitch,  CFState.yaw,
-//                     CFState.x_d, CFState.y_d, CFState.z_d,
-//                     CFState.roll_d, CFState.pitch_d, CFState.yaw_d;
+//         X0_drone << CFState_cf1.x, CFState_cf1.y, CFState_cf1.z,
+//                     CFState_cf1.roll, CFState_cf1.pitch,  CFState_cf1.yaw,
+//                     CFState_cf1.x_d, CFState_cf1.y_d, CFState_cf1.z_d,
+//                     CFState_cf1.roll_d, CFState_cf1.pitch_d, CFState_cf1.yaw_d;
 //
 //         soln_drone=drone_solver.run_MPC(X0_drone, X_goal_drone, 100, execution_steps);
 //
@@ -464,12 +593,12 @@ int main(int argc, char **argv) {
 //         std::cout << X0_drone << std::endl;
 //         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_drone.first[39][0], soln_drone.first[39][1], soln_drone.first[39][2]);
 //
-//         srvGoTo.request.goal.x = soln_drone.first[39][0];
-//         srvGoTo.request.goal.y = soln_drone.first[39][1];
-//         srvGoTo.request.goal.z = soln_drone.first[39][2];
-//         srvGoTo.request.yaw = 0.0;
-//         srvGoTo.request.duration = ros::Duration(5.0);
-//         GoToClient.call(srvGoTo);
+//         srvGoTo_cf2.request.goal.x = soln_drone.first[39][0];
+//         srvGoTo_cf2.request.goal.y = soln_drone.first[39][1];
+//         srvGoTo_cf2.request.goal.z = soln_drone.first[39][2];
+//         srvGoTo_cf2.request.yaw = 0.0;
+//         srvGoTo_cf2.request.duration = ros::Duration(5.0);
+//         GoToClient_cf1.call(srvGoTo_cf2);
 //
 //         int c = getch();   // call your non-blocking input function
 //         if (c == '\n') {
@@ -503,48 +632,48 @@ int main(int argc, char **argv) {
 
 // /* Draw square trajectory */
 //
-// srvGoTo.request.goal.x = 0.0;
-// srvGoTo.request.goal.y = 0.0;
-// srvGoTo.request.goal.z = 2.0;
-// srvGoTo.request.yaw = 0.0;
-// srvGoTo.request.duration = ros::Duration(3.0);
-// GoToClient.call(srvGoTo);
+// srvGoTo_cf2.request.goal.x = 0.0;
+// srvGoTo_cf2.request.goal.y = 0.0;
+// srvGoTo_cf2.request.goal.z = 2.0;
+// srvGoTo_cf2.request.yaw = 0.0;
+// srvGoTo_cf2.request.duration = ros::Duration(3.0);
+// GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
 //
-// srvGoTo.request.goal.x = 0.0;
-// srvGoTo.request.goal.y = 1.0;
-// srvGoTo.request.goal.z = 2.0;
-// srvGoTo.request.yaw = 0.0;
-// srvGoTo.request.duration = ros::Duration(3.0);
-// GoToClient.call(srvGoTo);
+// srvGoTo_cf2.request.goal.x = 0.0;
+// srvGoTo_cf2.request.goal.y = 1.0;
+// srvGoTo_cf2.request.goal.z = 2.0;
+// srvGoTo_cf2.request.yaw = 0.0;
+// srvGoTo_cf2.request.duration = ros::Duration(3.0);
+// GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
 //
-// srvGoTo.request.goal.x = 1.0;
-// srvGoTo.request.goal.y = 1.0;
-// srvGoTo.request.goal.z = 2.0;
-// srvGoTo.request.yaw = 0.0;
-// srvGoTo.request.duration = ros::Duration(3.0);
-// GoToClient.call(srvGoTo);
+// srvGoTo_cf2.request.goal.x = 1.0;
+// srvGoTo_cf2.request.goal.y = 1.0;
+// srvGoTo_cf2.request.goal.z = 2.0;
+// srvGoTo_cf2.request.yaw = 0.0;
+// srvGoTo_cf2.request.duration = ros::Duration(3.0);
+// GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
 //
-// srvGoTo.request.goal.x = 1.0;
-// srvGoTo.request.goal.y = 0.0;
-// srvGoTo.request.goal.z = 2.0;
-// srvGoTo.request.yaw = 0.0;
-// srvGoTo.request.duration = ros::Duration(3.0);
-// GoToClient.call(srvGoTo);
+// srvGoTo_cf2.request.goal.x = 1.0;
+// srvGoTo_cf2.request.goal.y = 0.0;
+// srvGoTo_cf2.request.goal.z = 2.0;
+// srvGoTo_cf2.request.yaw = 0.0;
+// srvGoTo_cf2.request.duration = ros::Duration(3.0);
+// GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
 //
-// srvGoTo.request.goal.x = 0.0;
-// srvGoTo.request.goal.y = 0.0;
-// srvGoTo.request.goal.z = 2.0;
-// srvGoTo.request.yaw = 0.0;
-// srvGoTo.request.duration = ros::Duration(3.0);
-// GoToClient.call(srvGoTo);
+// srvGoTo_cf2.request.goal.x = 0.0;
+// srvGoTo_cf2.request.goal.y = 0.0;
+// srvGoTo_cf2.request.goal.z = 2.0;
+// srvGoTo_cf2.request.yaw = 0.0;
+// srvGoTo_cf2.request.duration = ros::Duration(3.0);
+// GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
 
