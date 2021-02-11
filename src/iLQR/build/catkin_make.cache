@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/iLQR/devel -DCMAKE_INSTALL_PREFIX=/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/iLQR/install -G Unix Makefiles

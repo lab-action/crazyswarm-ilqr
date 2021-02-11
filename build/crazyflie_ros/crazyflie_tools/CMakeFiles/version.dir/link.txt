@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11 -O2 -g -DNDEBUG  -rdynamic CMakeFiles/version.dir/src/version.cpp.o  -o /home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/devel/lib/crazyflie_tools/version -Wl,-rpath,/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/devel/lib /home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/devel/lib/libcrazyflie_cpp.so -lboost_program_options -lusb-1.0 

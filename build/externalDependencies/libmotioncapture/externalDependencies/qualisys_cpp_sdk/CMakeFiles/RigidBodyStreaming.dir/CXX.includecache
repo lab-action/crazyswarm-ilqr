@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/Network.h
+winsock2.h
+-
+
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RTPacket.h
+stdio.h
+-
+stdint.h
+-
+
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RTProtocol.h
+RTPacket.h
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RTPacket.h
+Network.h
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/Network.h
+vector
+-
+string
+-
+map
+-
+
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RigidBodyStreaming/RigidBodyStreaming.cpp
+RTProtocol.h
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RigidBodyStreaming/RTProtocol.h
+RTPacket.h
+/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/externalDependencies/libmotioncapture/externalDependencies/qualisys_cpp_sdk/RigidBodyStreaming/RTPacket.h
+unistd.h
+-
+

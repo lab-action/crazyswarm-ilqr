@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC   -O2 -g -DNDEBUG   -shared -Wl,-soname,libiLQR.so -o /home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/devel/lib/libiLQR.so CMakeFiles/iLQR.dir/__/iLQR/src/cost_structure.cpp.o CMakeFiles/iLQR.dir/__/iLQR/src/dynamics_structure.cpp.o CMakeFiles/iLQR.dir/__/iLQR/src/utils.cpp.o  -L/home/ayberk/adolc_base/lib64 
