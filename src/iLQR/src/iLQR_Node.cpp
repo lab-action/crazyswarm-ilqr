@@ -51,6 +51,13 @@
 #include "utils.h"
 #include <unistd.h>
 
+/* simple moving average filter */
+#define USE_SMA_FILTER 1
+#define SMA_WINDOW_LEN 10
+
+/* first order exponential low-pass filter */
+#define USE_EXP_FILTER 0
+#define EXP_FILT_ALPHA 0.9f
 
 struct stateVector {
     float x, y, z;
@@ -66,6 +73,7 @@ struct pose {
 };
 
 static stateVector CFState;
+static stateVector stateWindowBuf[SMA_WINDOW_LEN];
 
 static pose currentPose;
 static pose prevPose;
@@ -89,22 +97,16 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     float qw = msg->transforms[0].transform.rotation.w;
     tf2::Quaternion q(qx, qy, qz, qw);
 
+    /* Quaternion to roll,pitch,yaw conversion */
     double roll, pitch, yaw;
     tf2::Matrix3x3 m(q);
     m.getRPY(roll, pitch, yaw);
 
-    // std::cout << roll << ", " << pitch << ", " << yaw << std::endl;
-
     int secs = msg->transforms[0].header.stamp.sec;
     int nsecs = msg->transforms[0].header.stamp.nsec;
 
-    // std::cout << msg->transforms[0].header.stamp.sec << std::endl;
-    // std::cout << secs << std::endl;
-
-    // double timeStamp = secs + (nsecs * 0.000000001);
+    /* Calculate timestamp in nanoseconds */
     unsigned long timeStamp = (secs * 1e9) + nsecs;
-
-    // std::cout << "timeStamp: " << timeStamp << std::endl;
 
     double deltaT = 0.0;
 
@@ -125,6 +127,14 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
         prevPose.pitch = pitch;
         prevPose.yaw = yaw;
         prevPose.timeStamp = timeStamp;
+
+        /* Set initial conditions to first read state callback */
+        CFState.x = x;
+        CFState.y = y;
+        CFState.z = z;
+        CFState.roll = roll;
+        CFState.pitch = pitch;
+        CFState.yaw = yaw;
 
         first = false;
 
@@ -157,6 +167,26 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 
     }
 
+#if (USE_SMA_FILTER == 1)
+
+    stateWindowBuf[0] = CFState;
+
+    for (int idx = 1; idx < SMA_WINDOW_LEN; ++idx) {
+        stateWindowBuf[idx] = stateWindowBuf[idx-1];
+    }
+
+    /* Set CFState member to 0 */
+    memset(&CFState, 0x00, sizeof(stateVector));
+
+    for (int id = 0; idx < SMA_WINDOW_LEN, ++idx) {
+        CFState += stateWindowBuf[idx];
+    }
+
+    CFState /= SMA_WINDOW_LEN;
+
+#endif
+
+
     std::printf("\n\n");
     std::printf("##### CALLBACK\n");
 
@@ -170,6 +200,7 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
                 CFState.x_d, CFState.y_d, CFState.z_d, CFState.roll_d, CFState.pitch_d, CFState.yaw_d);
 }
 
+/* Modification of getch() to be non-blocking */
 int getch()
 {
   static struct termios oldt, newt;
@@ -178,9 +209,7 @@ int getch()
   newt.c_lflag &= ~(ICANON);                 // disable buffering
   newt.c_cc[VMIN] = 0; newt.c_cc[VTIME] = 0;
   tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
-
-  int c = getchar();  // read character (non-blocking)
-
+  int c = getchar();                         // read character (non-blocking)
   tcsetattr( STDIN_FILENO, TCSANOW, &oldt);  // restore old settings
   return c;
 }
@@ -192,15 +221,17 @@ int main(int argc, char **argv) {
 
     ros::NodeHandle n;
 
-    ros::Subscriber sub = n.subscribe("tf", 1000, callback);
+    ros::Subscriber state_subscriber = n.subscribe("tf", 1000, callback);
 
-    ros::Publisher pub = n.advertise<crazyflie_driver::Position>("cf1/cmd_position",1);
+    /* Publisher to cmd_position topic (currently doesn't work) */
+    // ros::Publisher pub = n.advertise<crazyflie_driver::Position>("cf1/cmd_position",1);
+    // crazyflie_driver::Position position_cmd;
 
+    /* Service clients for simple high-level commands */
     ros::ServiceClient takeoffClient = n.serviceClient<crazyflie_driver::Takeoff>("/takeoff");
     ros::ServiceClient landClient = n.serviceClient<crazyflie_driver::Land>("/land");
     ros::ServiceClient GoToClient = n.serviceClient<crazyflie_driver::GoTo>("/cf1/go_to");
 
-    crazyflie_driver::Position position_cmd;
 
     /* Send takeoff command through /Takeoff service */
     crazyflie_driver::Takeoff srvTakeoff;
@@ -211,64 +242,118 @@ int main(int argc, char **argv) {
 
     ros::Duration(5.0).sleep();
 
+    /* Construct GoTo service once to be used in loop */
     crazyflie_driver::GoTo srvGoTo;
-    srvGoTo.request.groupMask = 0;
+    srvGoTo.request.groupMask = 0;  // signal all CFs (I think?)
 
-    // srvGoTo.request.goal.x = 0.0;
-    // srvGoTo.request.goal.y = 0.0;
-    // srvGoTo.request.goal.z = 2.0;
-    // srvGoTo.request.yaw = 0.0;
-    // srvGoTo.request.duration = ros::Duration(3.0);
-    // GoToClient.call(srvGoTo);
-    //
-    // ros::Duration(1.0).sleep();
-    //
-    // srvGoTo.request.goal.x = 0.0;
-    // srvGoTo.request.goal.y = 1.0;
-    // srvGoTo.request.goal.z = 2.0;
-    // srvGoTo.request.yaw = 0.0;
-    // srvGoTo.request.duration = ros::Duration(3.0);
-    // GoToClient.call(srvGoTo);
-    //
-    // ros::Duration(1.0).sleep();
-    //
-    // srvGoTo.request.goal.x = 1.0;
-    // srvGoTo.request.goal.y = 1.0;
-    // srvGoTo.request.goal.z = 2.0;
-    // srvGoTo.request.yaw = 0.0;
-    // srvGoTo.request.duration = ros::Duration(3.0);
-    // GoToClient.call(srvGoTo);
-    //
-    // ros::Duration(1.0).sleep();
-    //
-    // srvGoTo.request.goal.x = 1.0;
-    // srvGoTo.request.goal.y = 0.0;
-    // srvGoTo.request.goal.z = 2.0;
-    // srvGoTo.request.yaw = 0.0;
-    // srvGoTo.request.duration = ros::Duration(3.0);
-    // GoToClient.call(srvGoTo);
-    //
-    // ros::Duration(1.0).sleep();
-    //
-    // srvGoTo.request.goal.x = 0.0;
-    // srvGoTo.request.goal.y = 0.0;
-    // srvGoTo.request.goal.z = 2.0;
-    // srvGoTo.request.yaw = 0.0;
-    // srvGoTo.request.duration = ros::Duration(3.0);
-    // GoToClient.call(srvGoTo);
-    //
-    // ros::Duration(1.0).sleep();
-
-
+    /* iLQR solver parameters */
     constexpr size_t horizon=5;
     constexpr int total_steps=300;
-////	int horizon=1000;
-    unsigned int tag1(1),tag2(2),tag3(3),tag4(4),tag5(5),tag6(6)
-    ,tag7(7),tag8(8),tag9(9);
+    unsigned int tag1(1),tag2(2),tag3(3),tag4(4),tag5(5),
+                 tag6(6),tag7(7),tag8(8),tag9(9);
 
     double time_step=0.1;
 
-//
+
+
+    cost<3,3> integrator_running_cost(Single_Integrator_Cost::running_cost,tag7);
+    cost<3,3> integrator_terminal_cost(Single_Integrator_Cost::terminal_cost,tag8);
+    dynamics<3,3> integrator_dynamics(Single_Integrator_3D::dynamics,tag9,time_step);
+    iLQR<3,3,horizon>::input_trajectory u_init_integrator;
+    iLQR<3,3,horizon> integrator_solver(integrator_running_cost,integrator_terminal_cost,integrator_dynamics);
+    Eigen::Matrix<double,3,1> u_integrator=Eigen::Matrix<double,3,1>::Zero();
+    Eigen::Matrix<double,3,1> x0_integrator=Eigen::Matrix<double,3,1>::Zero();
+    Eigen::Matrix<double,3,1> x_goal_integrator;
+    iLQR<3,3,horizon>::state_input_trajectory soln_integrator;
+    iLQR<3,3,total_steps>::state_input_trajectory soln_integrator_rhc;
+
+    //	u_drone2=u_drone2*sqrt(Drone_Dynamics::mass*Drone_Dynamics::g/(4*Drone_Dynamics::C_T));
+    //	std::fill(std::begin(u_init_drone2), std::end(u_init_drone2), u_drone2);
+    //	iLQR<12*2,4*2,horizon>::state_input_trajectory soln_drone2;
+    //	iLQR<12*2,4*2,total_steps>::state_input_trajectory soln_drone2_rhc;
+
+
+	clock_t t_start, t_end;
+
+	double seconds;
+	integrator_solver.set_MPC(u_init_integrator);
+	int execution_steps=1;
+	soln_integrator_rhc.first[0]=x0_integrator;
+	std::string state_path="/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/iLQR/datalog/states.txt";
+	std::string input_path="/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/iLQR/datalog/inputs.txt";
+	t_start = clock();
+
+    /* Goal position of trajectory */
+    x_goal_integrator << 1.0,1.0,1.0;
+
+    while (ros::ok())
+	{
+
+        /* Spin once for ROS callback to work */
+        ros::spinOnce();
+
+        /* populate state vector with current state */
+        x0_integrator << CFState.x, CFState.y, CFState.z;
+
+        /* run iLQR algorithm */
+		soln_integrator = integrator_solver.run_MPC(x0_integrator,
+				                                    x_goal_integrator,
+                                                    50,
+                                                    execution_steps);
+
+        /* Write solution to file for debugging */
+        write_file<12,4,horizon>(state_path, input_path, soln_integrator);
+		// soln_integrator_rhc.first[i+1]=soln_integrator.first[1];
+		// soln_integrator_rhc.second[i]=soln_integrator.second[0];
+
+        std::printf("\n\n");
+        std::cout << x0_integrator << std::endl;
+        std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_integrator.first[4][0], soln_integrator.first[4][1], soln_integrator.first[4][2]);
+
+        /* Populate GoTo command with waypoint and call service */
+        srvGoTo.request.goal.x = soln_integrator.first[4][0];
+        srvGoTo.request.goal.y = soln_integrator.first[4][1];
+        srvGoTo.request.goal.z = soln_integrator.first[4][2];
+        srvGoTo.request.yaw = 0.0;
+        srvGoTo.request.duration = ros::Duration(3.0);
+        GoToClient.call(srvGoTo);
+
+
+        /* Check if <Enter> key way pressed */
+        int c = getch();
+        if (c == '\n') {
+            std::cout << "LANDING" << std::endl;
+            break;
+        }
+
+
+	}
+	t_end = clock();
+
+
+	// soln_drone=drone_solver.solve_open_loop(X0_drone, X0_drone, 200, u_init_drone, horizon);
+	// write_file<12,4,horizon>(state_path,input_path, soln_drone);
+	// write_file<3,3,total_steps>(state_path,input_path, soln_integrator_rhc);
+
+
+	std::cout<<"finished"<<std::endl;
+	seconds = 1/((double)(t_end - t_start) / CLOCKS_PER_SEC/total_steps);
+	printf("Time: %f s\n", seconds);
+
+
+
+    crazyflie_driver::Land srvLand;
+    srvLand.request.duration = ros::Duration(4.0);
+    landClient.call(srvLand);
+
+    ros::spin();
+
+    return 0;
+}
+
+/*############################################################################*/
+/*############################################################################*/
+/*############################################################################*/
 
 // /* This part is single drone simulation*/
 //
@@ -367,127 +452,77 @@ int main(int argc, char **argv) {
 // /* End of single drone simulation*/
 
 
+/*############################################################################*/
+/*############################################################################*/
+/*############################################################################*/
 
-
-
-cost<3,3> integrator_running_cost(Single_Integrator_Cost::running_cost,tag7);
-cost<3,3> integrator_terminal_cost(Single_Integrator_Cost::terminal_cost,tag8);
-dynamics<3,3> integrator_dynamics(Single_Integrator_3D::dynamics,tag9,time_step);
-iLQR<3,3,horizon>::input_trajectory u_init_integrator;
-iLQR<3,3,horizon> integrator_solver(integrator_running_cost,integrator_terminal_cost,integrator_dynamics);
-Eigen::Matrix<double,3,1> u_integrator=Eigen::Matrix<double,3,1>::Zero();
-Eigen::Matrix<double,3,1> x0_integrator=Eigen::Matrix<double,3,1>::Zero();
-Eigen::Matrix<double,3,1> x_goal_integrator;
-iLQR<3,3,horizon>::state_input_trajectory soln_integrator;
-iLQR<3,3,total_steps>::state_input_trajectory soln_integrator_rhc;
-
-//	u_drone2=u_drone2*sqrt(Drone_Dynamics::mass*Drone_Dynamics::g/(4*Drone_Dynamics::C_T));
-//	std::fill(std::begin(u_init_drone2), std::end(u_init_drone2), u_drone2);
-//	iLQR<12*2,4*2,horizon>::state_input_trajectory soln_drone2;
-//	iLQR<12*2,4*2,total_steps>::state_input_trajectory soln_drone2_rhc;
-
-
-
-
-
-	clock_t t_start, t_end;
+// /* Draw square trajectory */
 //
-////
-	double seconds;
-	integrator_solver.set_MPC(u_init_integrator);
-	int execution_steps=1;
-	soln_integrator_rhc.first[0]=x0_integrator;
-	// std::string state_path="/Users/talhakavuncu/Desktop/research/cpp_code/states.txt";
-	// std::string input_path="/Users/talhakavuncu/Desktop/research/cpp_code/inputs.txt";
-	t_start = clock();
-	// for(int i=0;i<total_steps;++i)
-
-
-    x_goal_integrator<<1.0,1.0,1.0;
-
-
-    while (ros::ok())
-	{
-//		if (i>total_steps/3)
-//			x_goal_integrator<<0,0,0;
-		// std::cout<<"iteration "<<i<<std::endl;
-
-        ros::spinOnce();
-//////
-
-        x0_integrator << CFState.x, CFState.y, CFState.z;
-
-		soln_integrator=integrator_solver.run_MPC(x0_integrator,
-				x_goal_integrator, 50, execution_steps);
-////
-////////		unsigned int microsecond = 1000000;
-////////		usleep(2 * microsecond);
-////		write_file<12,4,horizon>(state_path,input_path, soln_drone);
-		// soln_integrator_rhc.first[i+1]=soln_integrator.first[1];
-		// soln_integrator_rhc.second[i]=soln_integrator.second[0];
-
-        std::printf("\n\n");
-        std::cout << x0_integrator << std::endl;
-        std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_integrator.first[4][0], soln_integrator.first[4][4], soln_integrator.first[4][2]);
-
-        srvGoTo.request.goal.x = soln_integrator.first[4][0];
-        srvGoTo.request.goal.y = soln_integrator.first[4][1];
-        srvGoTo.request.goal.z = soln_integrator.first[4][2];
-        srvGoTo.request.yaw = 0.0;
-        srvGoTo.request.duration = ros::Duration(3.0);
-        GoToClient.call(srvGoTo);
-
-        int c = getch();   // call your non-blocking input function
-        if (c == '\n') {
-            std::cout << "LANDING" << std::endl;
-            break;
-        }
-
-
-	}
-	t_end = clock();
-////
-//////
-////////	soln_drone=drone_solver.solve_open_loop(X0_drone, X0_drone, 200, u_init_drone, horizon);
-////////	write_file<12,4,horizon>(state_path,input_path, soln_drone);
-	// write_file<3,3,total_steps>(state_path,input_path, soln_integrator_rhc);
-////
-	std::cout<<"finished"<<std::endl;
-	seconds = 1/((double)(t_end - t_start) / CLOCKS_PER_SEC/total_steps);
-	printf("Time: %f s\n", seconds);
+// srvGoTo.request.goal.x = 0.0;
+// srvGoTo.request.goal.y = 0.0;
+// srvGoTo.request.goal.z = 2.0;
+// srvGoTo.request.yaw = 0.0;
+// srvGoTo.request.duration = ros::Duration(3.0);
+// GoToClient.call(srvGoTo);
+//
+// ros::Duration(1.0).sleep();
+//
+// srvGoTo.request.goal.x = 0.0;
+// srvGoTo.request.goal.y = 1.0;
+// srvGoTo.request.goal.z = 2.0;
+// srvGoTo.request.yaw = 0.0;
+// srvGoTo.request.duration = ros::Duration(3.0);
+// GoToClient.call(srvGoTo);
+//
+// ros::Duration(1.0).sleep();
+//
+// srvGoTo.request.goal.x = 1.0;
+// srvGoTo.request.goal.y = 1.0;
+// srvGoTo.request.goal.z = 2.0;
+// srvGoTo.request.yaw = 0.0;
+// srvGoTo.request.duration = ros::Duration(3.0);
+// GoToClient.call(srvGoTo);
+//
+// ros::Duration(1.0).sleep();
+//
+// srvGoTo.request.goal.x = 1.0;
+// srvGoTo.request.goal.y = 0.0;
+// srvGoTo.request.goal.z = 2.0;
+// srvGoTo.request.yaw = 0.0;
+// srvGoTo.request.duration = ros::Duration(3.0);
+// GoToClient.call(srvGoTo);
+//
+// ros::Duration(1.0).sleep();
+//
+// srvGoTo.request.goal.x = 0.0;
+// srvGoTo.request.goal.y = 0.0;
+// srvGoTo.request.goal.z = 2.0;
+// srvGoTo.request.yaw = 0.0;
+// srvGoTo.request.duration = ros::Duration(3.0);
+// GoToClient.call(srvGoTo);
+//
+// ros::Duration(1.0).sleep();
 
 
 
 
 
-
-    // // /* Control loop */
-    // while (ros::ok()) {
-    //
-    //     int c = getch();   // call your non-blocking input function
-    //     if (c == '\n') {
-    //         std::cout << "LANDING" << std::endl;
-    //         break;
-    //     }
-    //
-    //     ros::spinOnce();
-    //
-    // 	// position_cmd.x = 0;
-    // 	// position_cmd.y = 0;
-    // 	// position_cmd.z = 2.0;
-    // 	// position_cmd.yaw = 0.0;
-    // 	// pub.publish(position_cmd);
-    //     //
-    //     // ros::spinOnce();
-    //
-    //
-    // }
-
-    crazyflie_driver::Land srvLand;
-    srvLand.request.duration = ros::Duration(4.0);
-    landClient.call(srvLand);
-
-    ros::spin();
-
-    return 0;
-}
+// /* Control loop */
+// while (ros::ok()) {
+//
+//     int c = getch();   // call your non-blocking input function
+//     if (c == '\n') {
+//         std::cout << "LANDING" << std::endl;
+//         break;
+//     }
+//
+//     ros::spinOnce();
+//
+// 	// position_cmd.x = 0;
+// 	// position_cmd.y = 0;
+// 	// position_cmd.z = 2.0;
+// 	// position_cmd.yaw = 0.0;
+// 	// pub.publish(position_cmd);
+//
+//
+// }
