@@ -1,0 +1,8 @@
+prefix=/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/install
+
+Name: crazyswarm
+Description: Description of crazyswarm
+Version: 0.0.3
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: message_runtime std_msgs tf crazyflie_cpp crazyflie_driver
