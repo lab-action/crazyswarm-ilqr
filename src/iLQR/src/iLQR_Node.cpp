@@ -178,11 +178,33 @@ void callback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     /* Set CFState member to 0 */
     memset(&CFState, 0x00, sizeof(stateVector));
 
-    for (int id = 0; idx < SMA_WINDOW_LEN, ++idx) {
-        CFState += stateWindowBuf[idx];
+    for (int idx = 0; idx < SMA_WINDOW_LEN; ++idx) {
+        CFState.x += stateWindowBuf[idx].x;
+	CFState.y += stateWindowBuf[idx].y;
+	CFState.z += stateWindowBuf[idx].z;
+        CFState.roll += stateWindowBuf[idx].roll;
+	CFState.pitch += stateWindowBuf[idx].pitch;
+	CFState.yaw += stateWindowBuf[idx].yaw;
+        CFState.x_d += stateWindowBuf[idx].x_d;
+	CFState.y_d += stateWindowBuf[idx].y_d;
+	CFState.z_d += stateWindowBuf[idx].z_d;
+	CFState.roll_d += stateWindowBuf[idx].roll_d;
+	CFState.pitch_d += stateWindowBuf[idx].pitch_d;
+	CFState.yaw_d += stateWindowBuf[idx].yaw_d;
     }
 
-    CFState /= SMA_WINDOW_LEN;
+    CFState.x = CFState.x / ((float) SMA_WINDOW_LEN);
+    CFState.y = CFState.y / ((float) SMA_WINDOW_LEN);
+    CFState.z = CFState.z / ((float) SMA_WINDOW_LEN);
+    CFState.x = CFState.roll / ((float) SMA_WINDOW_LEN);
+    CFState.y = CFState.pitch / ((float) SMA_WINDOW_LEN);
+    CFState.z = CFState.yaw / ((float) SMA_WINDOW_LEN);
+    CFState.x_d = CFState.x_d / ((float) SMA_WINDOW_LEN);
+    CFState.y_d = CFState.y_d / ((float) SMA_WINDOW_LEN);
+    CFState.z_d = CFState.z_d / ((float) SMA_WINDOW_LEN);
+    CFState.roll_d = CFState.roll_d / ((float) SMA_WINDOW_LEN);
+    CFState.pitch_d = CFState.pitch_d / ((float) SMA_WINDOW_LEN);
+    CFState.yaw_d = CFState.yaw_d / ((float) SMA_WINDOW_LEN);
 
 #endif
 
@@ -302,7 +324,7 @@ int main(int argc, char **argv) {
                                                     execution_steps);
 
         /* Write solution to file for debugging */
-        write_file<12,4,horizon>(state_path, input_path, soln_integrator);
+        write_file<3,3,horizon>(state_path, input_path, soln_integrator);
 		// soln_integrator_rhc.first[i+1]=soln_integrator.first[1];
 		// soln_integrator_rhc.second[i]=soln_integrator.second[0];
 
