@@ -6,7 +6,7 @@
  */
 
 #include <unsupported/Eigen/AdolcForward>
-#include <adolc.h>
+#include <adolc/adolc.h>
 #include <Eigen/Dense>
 
 //void cost()
@@ -40,5 +40,3 @@
 //	output>>=output_d;
 //	trace_off();
 //}
-
-

@@ -54,57 +54,84 @@ namespace Unicycle_Dynamics
 		return x_dot;
 
 	};
+	unicycle2_state_tensor dynamics_2(const unicycle2_state_tensor & x,const unicycle2_input_tensor & u)
+	{
+		unicycle2_state_tensor x_dot;
 
+		for(int i=0;i<2;++i)
+			x_dot.segment(4*i,4)=dynamics(x.segment(4*i,4),u.segment(2*i,2));
 
+		return x_dot;
+	};
+	unicycle4_state_tensor dynamics_4(const unicycle4_state_tensor & x,const unicycle4_input_tensor & u)
+	{
+		unicycle4_state_tensor x_dot;
+
+		for(int i=0;i<4;++i)
+			x_dot.segment(4*i,4)=dynamics(x.segment(4*i,4),u.segment(2*i,2));
+
+		return x_dot;
+	};
 
 	unicycle3_state_tensor dynamics_3(const unicycle3_state_tensor & x,const unicycle3_input_tensor & u)
 	{
 		unicycle3_state_tensor x_dot;
-	//	std::cout<<"no issues"<<std::endl;
-	//	std::cout<<x.rows()<<std::endl;
-		adouble px1,py1,theta1,v1,omega1,a1;
-		adouble px2,py2,theta2,v2,omega2,a2;
-		adouble px3,py3,theta3,v3,omega3,a3;
-		px1=x[0];
-		py1=x[1];
-		theta1=x[2];
-		v1=x[3];
-		omega1=u[0];
-		a1=u[1];
-
-		px2=x[4];
-		py2=x[5];
-		theta2=x[6];
-		v2=x[7];
-		omega2=u[2];
-		a2=u[3];
-
-
-		px3=x[8];
-		py3=x[9];
-		theta3=x[10];
-		v3=x[11];
-		omega3=u[4];
-		a3=u[5];
-
-		x_dot[0]=v1*cos(theta1);
-		x_dot[1]=v1*sin(theta1);
-		x_dot[2]=omega1;
-		x_dot[3]=a1;
-
-		x_dot[4]=v2*cos(theta2);
-		x_dot[5]=v2*sin(theta2);
-		x_dot[6]=omega2;
-		x_dot[7]=a2;
-
-		x_dot[8]=v3*cos(theta3);
-		x_dot[9]=v3*sin(theta3);
-		x_dot[10]=omega3;
-		x_dot[11]=a3;
+		for(int i=0;i<3;++i)
+			x_dot.segment(4*i,4)=dynamics(x.segment(4*i,4),u.segment(2*i,2));
+//	//	std::cout<<"no issues"<<std::endl;
+//	//	std::cout<<x.rows()<<std::endl;
+//		adouble px1,py1,theta1,v1,omega1,a1;
+//		adouble px2,py2,theta2,v2,omega2,a2;
+//		adouble px3,py3,theta3,v3,omega3,a3;
+//		px1=x[0];
+//		py1=x[1];
+//		theta1=x[2];
+//		v1=x[3];
+//		omega1=u[0];
+//		a1=u[1];
+//
+//		px2=x[4];
+//		py2=x[5];
+//		theta2=x[6];
+//		v2=x[7];
+//		omega2=u[2];
+//		a2=u[3];
+//
+//
+//		px3=x[8];
+//		py3=x[9];
+//		theta3=x[10];
+//		v3=x[11];
+//		omega3=u[4];
+//		a3=u[5];
+//
+//		x_dot[0]=v1*cos(theta1);
+//		x_dot[1]=v1*sin(theta1);
+//		x_dot[2]=omega1;
+//		x_dot[3]=a1;
+//
+//		x_dot[4]=v2*cos(theta2);
+//		x_dot[5]=v2*sin(theta2);
+//		x_dot[6]=omega2;
+//		x_dot[7]=a2;
+//
+//		x_dot[8]=v3*cos(theta3);
+//		x_dot[9]=v3*sin(theta3);
+//		x_dot[10]=omega3;
+//		x_dot[11]=a3;
 
 		return x_dot;
 
 	};
+
+	unicycle6_state_tensor dynamics_6(const unicycle6_state_tensor & x,const unicycle6_input_tensor & u)
+	{
+		unicycle6_state_tensor x_dot;
+		for(int i=0;i<6;++i)
+			x_dot.segment(4*i,4)=dynamics(x.segment(4*i,4),u.segment(2*i,2));
+
+		return x_dot;
+	}
 }
 
 namespace Drone_Dynamics{
@@ -405,4 +432,108 @@ namespace Single_Integrator_3D
 	{
 		return u;
 	}
+}
+namespace Double_Integrator_3D
+{
+	state_tensor dynamics(const state_tensor & x, const input_tensor & u)
+	{
+		state_tensor x_dot;
+		x_dot[0]=x[3];
+		x_dot[1]=x[4];
+		x_dot[2]=x[5];
+		x_dot[3]=u[0]/mb;
+		x_dot[4]=u[1]/mb;
+		x_dot[5]=u[2]/mb;
+
+		return x_dot;
+	};
+//
+//	state_tensor2 dynamics2(const state_tensor2 & x, const input_tensor2 & u)
+//	{
+//		return u;
+//	}
+}
+namespace Drone_First_Order_Dynamics
+{
+	typedef Eigen::Matrix<adouble,6,1> drone_state_tensor;
+	typedef Eigen::Matrix<adouble,6,1> drone_input_tensor;
+
+	typedef Eigen::Matrix<adouble,6*2,1> drone2_state_tensor;
+	typedef Eigen::Matrix<adouble,6*2,1> drone2_input_tensor;
+
+//	const double C_T=3.1582*1e-10;
+//	const double C_D=7.9379*1e-12;
+//	const double g=9.80665;
+//	const double d=39.73*1e-3;
+//	const double I_xx=1.395*1e-5;
+//	const double I_yy=1.436*1e-5;
+//	const double I_zz=2.173*1e-5;
+//	const double mass=0.033;
+	drone_state_tensor dynamics(const drone_state_tensor & X,const drone_input_tensor & input)
+	{
+		adouble x,y,z,phi,theta,psi,u,v,w,p,q,r,x_d,y_d,z_d,phi_d,theta_d,psi_d;
+		drone_state_tensor x_dot;
+		u=input[0];
+		v=input[1];
+		w=input[2];
+		p=input[3];
+		q=input[4];
+		r=input[5];
+		Eigen::Matrix<adouble,3,3> Rsb,mat,mat_inv;
+		Eigen::Matrix<adouble,3,1> v_b,w_b,v_i,euler_d;
+
+		v_b<<u,v,w;
+		w_b<<p,q,r;
+
+		Rsb<<cos(theta)*cos(psi), cos(theta)*sin(psi), -sin(theta),
+				-cos(phi)*sin(psi)+sin(theta)*cos(psi)*sin(phi), cos(psi)*cos(phi)+sin(theta)*sin(psi)*sin(phi), sin(phi)*cos(theta),
+				sin(phi)*sin(psi)+cos(phi)*sin(theta)*cos(psi), -sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi), cos(theta)*cos(phi);
+
+//		mat<<1,0,-sin(theta),
+//			 0,cos(phi),sin(phi)*cos(theta),
+//			 0,-sin(phi),cos(theta)*cos(phi);
+
+		mat_inv<<1,sin(phi)*tan(theta),cos(phi)*tan(theta),
+				0,cos(phi),-sin(phi),
+				0,sin(phi)/cos(theta),cos(phi)/cos(theta);
+
+		v_i=Rsb*v_b;
+		euler_d=mat_inv*w_b;
+
+		x_d=v_i[0];
+		y_d=v_i[1];
+		z_d=v_i[2];
+
+		phi_d=euler_d[0];
+		theta_d=euler_d[1];
+		psi_d=euler_d[2];
+
+//		x_d=w*(sin(phi)*sin(psi)+cos(phi)*cos(psi)*sin(theta))-
+//				v*(cos(phi)*sin(psi)-cos(psi)*sin(phi)*sin(theta))+
+//				u*(cos(psi)*cos(theta));
+//
+//		y_d=v*(cos(phi)*cos(psi)+sin(phi)*sin(psi)*sin(theta))-
+//				w*(cos(psi)*sin(phi)-cos(phi)*sin(psi)*sin(theta))+
+//				u*(cos(theta)*sin(psi));
+//		z_d=w*(cos(phi)*cos(theta))-u*(sin(theta))+v*(cos(theta)*sin(phi));
+//
+//		phi_d=p+r*(cos(phi)*tan(theta))+q*(sin(phi)*tan(theta));
+//		theta_d=q*cos(phi)-r*sin(phi);
+//		psi_d=r*cos(phi)/cos(theta)+q*sin(phi)/cos(theta);
+//
+		x_dot<<x_d,y_d,z_d,phi_d,theta_d,psi_d;
+
+		return x_dot;
+	}
+
+	drone2_state_tensor dynamics_2(const drone2_state_tensor & x,const drone2_input_tensor & u)
+	{
+		drone2_state_tensor X_dot;
+		drone_state_tensor X_dot1,X_dot2;
+		X_dot1=dynamics(x.segment(0, 6),u.segment(0,6));
+		X_dot2=dynamics(x.segment(6, 6),u.segment(6,6));
+		X_dot<<X_dot1,X_dot2;
+		return X_dot;
+	}
+
 }

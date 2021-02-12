@@ -51,7 +51,7 @@ public:
 		this->horizon=hrzn;
 		this->state_size=st_sz;
 		this->action_size=ac_sz;
-		// std::cout<<"this is constructor"<<std::endl;
+		std::cout<<"this is constructor"<<std::endl;
 		mu=1.0;
 		mu_min=1e-6;
 		mu_max=1e300;
@@ -162,10 +162,8 @@ typename iLQR<st_sz,ac_sz,hrzn>::state_input_trajectory iLQR<st_sz,ac_sz,hrzn>::
 
 		if (changed)
 		{
-			// std::cout<<"changed"<<std::endl;
+//			std::cout<<"changed"<<std::endl;
 			forward_rollout(X0,us,X_goal);
-
-			// std::cout << "iLQR.h   " << __LINE__ << std::endl;
 
 			J_opt = std::accumulate(L.begin(), L.end(), 0.0);
 //			L.resize(horizon);
@@ -249,14 +247,11 @@ typename iLQR<st_sz,ac_sz,hrzn>::state_input_trajectory iLQR<st_sz,ac_sz,hrzn>::
 template<size_t st_sz,size_t ac_sz,size_t hrzn>
 void iLQR<st_sz,ac_sz,hrzn>::forward_rollout(const state_type& X0,const input_trajectory& us, state_type& X_goal)
 {
-	// Eigen::VectorXd x,u;
+//	Eigen::VectorXd x,u;
 	state_type x;
 	input_type u;
-
 //	state_trajectory x
-	// std::cout << "iLQR.h   " << __LINE__ << std::endl;
 	xs[0]=X0;
-	// std::cout << "iLQR.h   " << __LINE__ << std::endl;
 //	std::cout<<"xs0 "<<xs[0]<<std::endl;
 	for(int i=0;i<horizon;++i)
 	{
@@ -265,9 +260,7 @@ void iLQR<st_sz,ac_sz,hrzn>::forward_rollout(const state_type& X0,const input_tr
 		u=us[i];
 //		std::cout<<u<<std::endl;
 //		std::cout<<sys_dynamics.evaluate_tensor(x,u)<<std::endl;
-		// std::cout << "iLQR.h   " << __LINE__ << std::endl;
 		sys_dynamics.evaluate_tensor(x,u);
-		// std::cout << "iLQR.h   " << __LINE__ << std::endl;
 		running_cost.evaluate_tensor(x, u,X_goal);
 //		std::cout<<sys_dynamics.eval(x, u)<<std::endl;
 		xs[i+1]=sys_dynamics.eval(x, u);
@@ -415,13 +408,7 @@ typename iLQR<st_sz,ac_sz,hrzn>::state_input_trajectory iLQR<st_sz,ac_sz,hrzn>::
 //	std::cout<<"X0: "<<X0.transpose()<<std::endl;
 
 //	std::cout<<"X0: "<<X0.transpose()<<std::endl;
-
-	// std::cout << "iLQR.h   " << __LINE__ << std::endl;
-
 	soln=solve_open_loop(X0, X_goal, n_iterations, us_MPC, horizon);
-
-	// std::cout << "iLQR.h   " << __LINE__ << std::endl;
-
 	us_MPC=soln.second;
 //	soln_MPC.first[0]=soln.first[0];
 //	soln_MPC.first[1]=soln.first[1];

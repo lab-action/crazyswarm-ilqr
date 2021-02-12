@@ -141,10 +141,8 @@ dynamics<state_size,input_size>::evaluate_tensor(const state_type &states,const 
 	Eigen::Matrix<double,state_size+input_size,1> concat(state_size + input_size);
 	concat<<states,inputs;
 
-	// std::cout << "dynamics.h   " << __LINE__ << std::endl;
-	tensor_eval(dynamics::tag, state_size, num_in_vars, 1, num_in_vars, &concat[0], tensor_, S);
-	// std::cout << "dynamics.h   " << __LINE__ << std::endl;
 
+	tensor_eval(dynamics::tag, state_size, num_in_vars, 1, num_in_vars, &concat[0], tensor_, S);
 //	Eigen::Matrix<double,m,28> tensor=
 //			Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>::Zero(m, 28);
 //	tensor=Eigen::Map<Eigen::Matrix<double,m,28,Eigen::RowMajor> > (*tensor_);

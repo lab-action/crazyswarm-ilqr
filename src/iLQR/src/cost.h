@@ -5,7 +5,7 @@
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
-// with this file, You can obtain one at https://urldefense.com/v3/__http://mozilla.org/MPL/2.0/__;!!DZ3fjg!stdehThRVtgO7OKT5F8cnuPbvRdItQZStE8UbRMzHyiJZLmQsl9lJFPWryd3jn9WYJQI$ .
+// with this file, You can obtain one at https://urldefense.com/v3/__http://mozilla.org/MPL/2.0/__;!!DZ3fjg!v5H_MtY41GsBht4EP2ryGNiJdIFmlmHnuOaL04RB_wTTVM4Cx7iADjAmTBDYHKPPtEIG$ .
 #ifndef COST_H_
 #define COST_H_
 #include <unsupported/Eigen/AdolcForward>

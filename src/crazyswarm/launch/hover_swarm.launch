@@ -33,8 +33,8 @@
           resetEstimation: 1
       # tracking
       motion_capture_type: "vicon" # one of none,vicon,optitrack,qualisys,vrpn
-      <!-- object_tracking_type: "libobjecttracker" # one of motionCapture,libobjecttracker -->
-      object_tracking_type: "motionCapture"
+      object_tracking_type: "libobjecttracker" # one of motionCapture,libobjecttracker
+      <!-- object_tracking_type: "motionCapture" -->
       send_position_only: False # set to False to send position+orientation; set to True to send position only
       vicon_host_name: "192.168.1.2:801"
       # optitrack_host_name: "optitrack"
@@ -63,7 +63,7 @@
 
   <node name="iLQR_Node" pkg="crazyswarm" type="iLQR_Node" output="screen"/>
 
-  <!-- <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_x" args="/cf2/log1/values[0]"/> -->
+  <!-- <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_x" args="/cf1/log1/values[0]"/> -->
   <!-- <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_roll" args="/cf1/log1/values[2] /cf1/log1/values[3]"/> -->
 
 </launch>
