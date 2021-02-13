@@ -495,7 +495,7 @@ namespace Drone_First_Order_Cost
 		adouble output,input_cost,collision_cost,d_prox,distance,distance_diff;
 		d_prox=1.0;
 		Eigen::Matrix<adouble,3,1> avoid_pos,avoid_diff;
-		avoid_pos<<-0.5,0.5,0.5;
+		avoid_pos<<0.5,0.5,0.5;
 //		avoid_diff<<
 		state_type_drone diff;
 		for (int i=0;i<3;++i)
@@ -506,7 +506,7 @@ namespace Drone_First_Order_Cost
 		distance_diff=distance-d_prox;
 //		adouble zero=0;
 //		adouble value=1e6*pow(distance_diff,2);
-		condassign(collision_cost,distance_diff,adouble(0),1e5*pow(distance_diff,2));
+		condassign(collision_cost,distance_diff,adouble(0),1e6*pow(distance_diff,2));
 //		for(int i=0;i<3;++i)
 //			xyz_diff[i]=diff[i];
 
@@ -529,7 +529,7 @@ namespace Drone_First_Order_Cost
 		input_cost=3e1*inputs.dot(inputs);
 //		output=0.000001*diff.transpose()*Q*diff;//intermediate;
 		diff=states-X_goal;
-		output=100*diff.dot(diff)+input_cost;//+collision_cost;
+		output=100*diff.dot(diff)+input_cost+collision_cost;
 //		output=1;
 //		output=100*(1*diff[0]*diff[0]+1*diff[1]*diff[1]+1*diff[2]*diff[2]+100*diff[3]*diff[3]+100*diff[7]*diff[7]);
 		return output;
@@ -561,14 +561,14 @@ namespace Drone_First_Order_Cost
 //		condassign(collision_cost,distance_diff,adouble(0),1e3*pow(distance_diff,2));
 
 		adouble ca_distance_diff,ca_cost,ca_distance,ca_dprox;
-		ca_dprox=0.5;
+		ca_dprox=1.0;
 		Eigen::Matrix<adouble,3,1> pos_diff;
 		for (int i=0;i<3;++i)
 			pos_diff[i]=states[i]-states[i+6];
 
 		ca_distance=pow(pos_diff.dot(pos_diff),0.5);
 		ca_distance_diff=ca_distance-ca_dprox;
-		condassign(ca_cost,ca_distance_diff,adouble(0),1e6*pow(ca_distance_diff,2));
+		condassign(ca_cost,ca_distance_diff,adouble(0),1e7*pow(ca_distance_diff,2));
 
 		state_type_drone2 goal_diff;
 		goal_diff=states-X_goal;

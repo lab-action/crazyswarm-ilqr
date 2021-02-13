@@ -24,6 +24,31 @@ crazyflieTypes:
         i_range_z: 0.4
         mass: 0.032
         massThrust: 132000
+  default2:
+    bigQuad: False
+    batteryVoltageWarning: 3.8  # V
+    batteryVoltateCritical: 3.7 # V
+    markerConfiguration: 1 # change to 3 for single marker tracking
+    dynamicsConfiguration: 0
+    firmwareParams:
+      ctrlMel:
+        kp_xy: 0.4 #0.6 # p for position
+        kd_xy: 0.2 # 0.35 # d for position
+        ki_xy: 0.05
+        i_range_xy: 2.0
+        kR_xy: 70000 # p for attitude
+        kw_xy: 20000 # d for attitude
+        kR_z: 60000 # 70000 # p for yaw
+        kw_z: 12000 # 30000  # d for yaw
+        ki_m_z: 500 #0 #20000     # i for yaw
+        i_range_m_z: 1500 # i range for yaw
+        kd_omega_rp: 200 # roll and pitch angular velocity d gain
+        kp_z: 1.25
+        kd_z: 0.4
+        ki_z: 0.05
+        i_range_z: 0.4
+        mass: 0.032
+        massThrust: 132000
   defaultSingleMarker:
     bigQuad: False
     batteryVoltageWarning: 3.8  # V
@@ -144,14 +169,14 @@ markerConfigurations:
       "1": [-0.00873988,0.000169513,0.0]
       "2": [-0.00387933,-0.0290379,0.0]
       "3": [-0.00399254,0.0308729,0.0]
-  "1": # medium frame
+  "1": # default2
     numPoints: 4
-    offset: [0.0, 0.0, -0.03]
+    offset: [0.0, 0.0, 0.0]
     points:
-      "0": [-0.00896228,-0.000716753,0.0716129]
-      "1": [-0.0156318,0.0997402,0.0508162]
-      "2": [0.0461693,-0.0881012,0.0380672]
-      "3": [-0.0789959,-0.0269793,0.0461144]
+      "0": [-0.0475552,1.03774,0.0]
+      "1": [-0.00702616,0.995367,0.0]
+      "2": [-0.0522032,0.953255,0.0]
+      "3": [0.0323911,0.94808,0.0]
   "2": # big frame
     numPoints: 4
     offset: [0.0, 0.0, -0.06]
