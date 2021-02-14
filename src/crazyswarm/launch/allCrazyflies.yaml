@@ -7,3 +7,11 @@ crazyflies:
     channel: 80
     initialPosition: [-0.5, -0.5, 0.0]
     type: default
+  - id: 3
+    channel: 80
+    initialPosition: [-0.2, 0.3, 0.0]
+    type: default
+  # - id: 4
+  #   channel: 80
+  #   initialPosition: [0.6, 1.0, 0.0]
+  #   type: default

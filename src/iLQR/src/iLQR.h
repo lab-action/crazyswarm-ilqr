@@ -58,6 +58,7 @@ public:
 		delta_0=2.0;
 		delta=delta_0;
 		tol=1e-8;
+		iteration_count=0;
 
 //		std::cout<<L[0]<<std::endl;
 		alphas={0,1,2,3,4,5,6,7,8,9};
@@ -74,7 +75,7 @@ public:
 		us_MPC=u_init;
 	}
 	state_input_trajectory run_MPC(const state_type& X0,
-			 state_type& Xgoal,int n_iterations,int execution_steps);
+			 state_type& Xgoal,int n_iterations, int subsequent_iterations, int execution_steps);
 
 //	void solve_MPC(vec_type init,vec_type goal,int horizon);
 private:
@@ -90,6 +91,7 @@ private:
 	double delta_0;
 	double delta;
 	double tol;
+	int iteration_count;
 	std::vector<double> alphas;
 //	alphas.
 //	std::vector<int> vect1 { 10, 20, 30 };
@@ -401,14 +403,19 @@ double iLQR<st_sz,ac_sz,hrzn>::trajectory_cost(state_type& X_goal)
 
 template<size_t st_sz,size_t ac_sz,size_t hrzn>
 typename iLQR<st_sz,ac_sz,hrzn>::state_input_trajectory iLQR<st_sz,ac_sz,hrzn>::run_MPC(const state_type& X0,
-		state_type& X_goal,int n_iterations,int execution_steps)
+		state_type& X_goal,int n_iterations, int subsequent_iterations, int execution_steps)
 {
 	state_input_trajectory soln;
 //	state_input_tr_MPC soln_MPC;
 //	std::cout<<"X0: "<<X0.transpose()<<std::endl;
 
 //	std::cout<<"X0: "<<X0.transpose()<<std::endl;
-	soln=solve_open_loop(X0, X_goal, n_iterations, us_MPC, horizon);
+	if (iteration_count == 0)
+		soln=solve_open_loop(X0, X_goal, n_iterations, us_MPC, horizon);
+	else
+		soln=solve_open_loop(X0, X_goal, subsequent_iterations, us_MPC, horizon);
+
+	++iteration_count;
 	us_MPC=soln.second;
 //	soln_MPC.first[0]=soln.first[0];
 //	soln_MPC.first[1]=soln.first[1];
@@ -421,7 +428,7 @@ typename iLQR<st_sz,ac_sz,hrzn>::state_input_trajectory iLQR<st_sz,ac_sz,hrzn>::
 //		std::cout<<"us: "<<i.transpose()<<" ";
 //	std::cout<<std::endl;
 	for (int i=0;i<execution_steps;++i)
-		us_MPC.at(hrzn-1-i)=Eigen::Matrix<double,ac_sz,1>::Random();
+		us_MPC.at(hrzn-1-i)=5*Eigen::Matrix<double,ac_sz,1>::Random();
 
 	return soln;
 
