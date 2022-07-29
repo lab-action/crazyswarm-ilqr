@@ -22,7 +22,6 @@ The additional node that was created takes the pose of the crazyflies as input a
 
 Although crazyswarm supports complex spline trajectories and other advanced functionality, only simple high-level commands like `go-to`, `takeoff`, and `land` were used for this project. These commands were found to sufficient for our objectives after tuning certain parameters.
 
-
 ## Code Break-down
 
 This section will be taking apart the `iLQR_Node.cpp` file and providing functional description of the ROS interface. Code pertaining to the iLQR algorithm is not detailed as this is specific to the application and is most likely to change.
@@ -83,7 +82,6 @@ void poseCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 
 It is important to note that if multiple crazyflies are being used, the messages pertaining to each active crazyflie are interleaved and arrive in no guaranteed order. Hence the callback logic must decide which crazyflie the received message is associated with. In our implementation this is done through simple if/else statements. Using switch-case statements could be favorable for achieving lower latency for experiments with larger numbers of crazyflies.
 
-
 ### Sending commands through ROS services
 
 The crazyswarm package provides multiple methods of sending commands of various complexity to the crazyflies. The method chosen for our experiments was to send high-level commands to ROS services. The high-level commands `/takeoff`, `/land`, and `/go_to` were sufficient to achieve our goals and proved to be very easy to get started with and adequately robust after some tuning.
@@ -99,8 +97,7 @@ ros::ServiceClient GoToClient_cf3 = n.serviceClient<crazyflie_driver::GoTo>("/cf
 ros::ServiceClient GoToClient_cf4 = n.serviceClient<crazyflie_driver::GoTo>("/cf4/go_to");
 ```
 
-***NOTE:*** The `/takeoff` and `/land` command are sent to __all__ crazyflies at the same time! Therefore, only one `ServiceClient` instance needs to be created for the two commands. The `/go_to` command, on the other hand, has a specific instance for each particular crazyflie. This requires separate `ServiceClient` instances pertaining to each crazyflie.
-
+***NOTE:*** The `/takeoff` and `/land` command are sent to **all** crazyflies at the same time! Therefore, only one `ServiceClient` instance needs to be created for the two commands. The `/go_to` command, on the other hand, has a specific instance for each particular crazyflie. This requires separate `ServiceClient` instances pertaining to each crazyflie.
 
 Since the GoTo command for each crazyflie are used repeatedly throughout the execution, `crazyflie_drive::GoTo` objects are created once at startup to be used later in the experiment loop.
 
@@ -136,11 +133,11 @@ landClient.call(srvLand);
 
 ## Notes and Caveats
 
-1. It was found that adopting an asymmetric marker pattern substantially improved the behavior of the pose tracking software integrated within the crazyflie package.
-
-![Marker Configuration](./doc/marker_config.png)
-
-
-2. The reflections from glass door towards the South-West corner of the flight arena interferes with the Vicon motion capture system. The degradation in accuracy is noticeable was clearly observed by other researchers as there is a note on the door explaining the issue. The region should be avoided if possible.
-
-![Marker Configuration](./doc/glass_door.png)
+1. It was found that adopting an asymmetric marker pattern substantially improved the
+   behavior of the pose tracking software integrated within the crazyflie package.
+   ![Marker Configuration](./doc/marker_config.png)
+2. The reflections from glass door towards the South-West corner of the flight arena
+   interferes with the Vicon motion capture system. The degradation in accuracy is
+   noticeable was clearly observed by other researchers as there is a note on the
+   door explaining the issue. The region should be avoided if possible.
+   ![Marker Configuration](./doc/glass_door.png)
