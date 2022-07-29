@@ -134,7 +134,11 @@ cfclient
 
 ## Connect your Windows USB devices with WSL devices
 
-Follow the instructions in [this blog post](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/).
+If you want to actually connect to the crazyflie to flash firmware onto it or get its
+radio address, you'll need to first have the dongle plugged into your laptop. If you
+go to your Device Manager, you should see it. The only issue here is that your WSL
+instance can't see this device, so you'll have to install a package that'll do this
+for us. Follow the instructions in [this blog post](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/).
 
 > NOTE: you'll have to have your default distro be your ROS distro since `usbipd-win` will
 > just use that one.
