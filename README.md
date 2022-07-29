@@ -3,14 +3,17 @@
 The ROS workspace of the crazyswarm-ilqr project.
 
 Project has been tested on the following environment:
+
 - Core i7 Laptop
 - Ubuntu 18.04
 - ROS Melodic
 
+Alternatively, if you're running native windows and would like to set up your machine
+to run with WSL2 + Ubuntu 20.04 + ROS Noetic, see [this guide](doc/wsl-install.md).
+
 This project relies heavily on the [crazyswarm](https://github.com/USC-ACTLab/crazyswarm) project as the underlying framework. Extensive documentation can be found on their Github repository and [here](https://crazyswarm.readthedocs.io/en/latest/index.html)
 
 The paper on the framework is incredibly helpful in understanding how the system works and its limitations. The paper can be found [here](http://usc-actlab.github.io/publications/Preiss_ICRA2017.pdf) or in the crazyswarm documentation.
-
 
 ## Project Layout and Software Architecture
 
