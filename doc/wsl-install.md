@@ -117,6 +117,10 @@ Add non-root USB permissions by going to the top of the `crazyswarm` repo and ru
 ./pc_permissions.sh
 ```
 
+References:
+
+- [Official instructions to configure the USB permissions](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/)
+
 ## Install `crazyflie-clients-python`
 
 Clone the repo:
@@ -138,10 +142,19 @@ If you want to actually connect to the crazyflie to flash firmware onto it or ge
 radio address, you'll need to first have the dongle plugged into your laptop. If you
 go to your Device Manager, you should see it. The only issue here is that your WSL
 instance can't see this device, so you'll have to install a package that'll do this
-for us. Follow the instructions in [this blog post](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/).
+for us.
+
+First, we need to install the latest `usbipd-win` on Windows by grabbing it from
+[here](https://github.com/dorssel/usbipd-win/releases). Then follow the
+[instructions](https://github.com/dorssel/usbipd-win/wiki/WSL-support#wsl-setup) to
+actually connect the device.
 
 > NOTE: you'll have to have your default distro be your ROS distro since `usbipd-win` will
 > just use that one.
+
+References:
+
+- [Blog Post with More Detail (but older packages)](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/)
 
 Check if that worked by going to your administrative `cmd.exe` and doing:
 
