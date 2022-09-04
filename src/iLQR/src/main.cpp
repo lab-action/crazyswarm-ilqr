@@ -14,7 +14,7 @@
 
 //#include <chrono>
 //#include <iomanip>
-#include <adolc.h>
+#include <adolc/adolc.h>
 #include <adolc/adouble.h>
 #include <vector>
 #include <time.h>
@@ -29,7 +29,7 @@
 #include "iLQR.h"
 #include "utils.h"
 #include<unistd.h>
-#include "DataStreamClient.h"
+// #include "DataStreamClient.h"
 
 
 
@@ -651,7 +651,7 @@ int main()
 //			auto term10=soln_drone_rhc.first[i]+scale*Eigen::Matrix<double,6,1>::Random();
 //			auto term=(term1+term2+term3+term4+term5+term6+term7+term8+term9+term10)/10;
 			soln_drone=drone_solver.run_MPC(term1,
-					x_goal_drone, 5, execution_steps);
+					x_goal_drone, 5, 1, execution_steps);
 	////
 	////////		unsigned int microsecond = 1000000;
 	////////		usleep(2 * microsecond);

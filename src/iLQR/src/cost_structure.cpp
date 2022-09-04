@@ -37,10 +37,6 @@ namespace Unicycle_Cost
 		output=input_cost+state_cost;
 		return output;
 	};
-
-
-
-
 	adouble terminal_cost(const state_type_unicycle & x,const input_type_unicycle & u,const state_type_unicycle & x_goal)
 	{
 
