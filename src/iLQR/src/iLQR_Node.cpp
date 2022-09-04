@@ -61,7 +61,6 @@
 #define USE_EXP_FILTER 1
 #define EXP_FILT_ALPHA 0.9f
 
-
 // static stateVector prevState_cf1;
 // static stateVector stateWindowBuf_cf1[SMA_WINDOW_LEN];
 
@@ -84,7 +83,8 @@ std::ofstream optimizerDatalogFile;
 
 bool first = true;
 
-void poseCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
+void poseCallback(const tf2_msgs::TFMessage::ConstPtr &msg)
+{
 
     /* Collect pose and timestamp information */
     std::string cf_id = msg->transforms[0].child_frame_id;
@@ -108,29 +108,35 @@ void poseCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     unsigned long timeStamp = (secs * 1e9) + nsecs;
     double deltaT = 0.0;
 
-
-    if (cf_id == "cf1") {
+    if (cf_id == "cf1")
+    {
         CFState_cf1.x = x;
         CFState_cf1.y = y;
         CFState_cf1.z = z;
         CFState_cf1.roll = roll;
         CFState_cf1.pitch = pitch;
         CFState_cf1.yaw = yaw;
-    } else if (cf_id == "cf2") {
+    }
+    else if (cf_id == "cf2")
+    {
         CFState_cf2.x = x;
         CFState_cf2.y = y;
         CFState_cf2.z = z;
         CFState_cf2.roll = roll;
         CFState_cf2.pitch = pitch;
         CFState_cf2.yaw = yaw;
-    } else if (cf_id == "cf3") {
+    }
+    else if (cf_id == "cf3")
+    {
         CFState_cf3.x = x;
         CFState_cf3.y = y;
         CFState_cf3.z = z;
         CFState_cf3.roll = roll;
         CFState_cf3.pitch = pitch;
         CFState_cf3.yaw = yaw;
-    } else if (cf_id == "cf4") {
+    }
+    else if (cf_id == "cf4")
+    {
         CFState_cf4.x = x;
         CFState_cf4.y = y;
         CFState_cf4.z = z;
@@ -158,22 +164,24 @@ void poseCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
 }
 
 /* Modification of getch() to be non-blocking */
-int getch() {
-  static struct termios oldt, newt;
-  tcgetattr( STDIN_FILENO, &oldt);           // save old settings
-  newt = oldt;
-  newt.c_lflag &= ~(ICANON);                 // disable buffering
-  newt.c_cc[VMIN] = 0; newt.c_cc[VTIME] = 0;
-  tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
-  int c = getchar();                         // read character (non-blocking)
-  tcsetattr( STDIN_FILENO, TCSANOW, &oldt);  // restore old settings
-  return c;
+int getch()
+{
+    static struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt); // save old settings
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON); // disable buffering
+    newt.c_cc[VMIN] = 0;
+    newt.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt); // apply new settings
+    int c = getchar();                       // read character (non-blocking)
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // restore old settings
+    return c;
 }
 
+int main(int argc, char **argv)
+{
 
-int main(int argc, char **argv) {
-
-    srand((unsigned int) time(0));
+    srand((unsigned int)time(0));
 
     init_datalog(droneDatalogFile,
                  "/home/ayberk/Documents/ACTIONLAB/crazyswarm/ros_ws/src/iLQR/datalog/",
@@ -203,18 +211,20 @@ int main(int argc, char **argv) {
 
     /* Wait for <Enter> key press to begin mission */
     std::cout << "\t########## PRESS <Enter> TO BEGIN MISSION ##########" << std::endl;
-    while (true) {
+    while (true)
+    {
         int c = getch();
-            if (c == '\n') {
-                std::cout << "\t########## BEGINNING MISSION ##########" << std::endl;
-                break;
-            }
-            ros::spinOnce();
+        if (c == '\n')
+        {
+            std::cout << "\t########## BEGINNING MISSION ##########" << std::endl;
+            break;
+        }
+        ros::spinOnce();
     }
 
     /* Construct GoTo service once to be used in loop */
     crazyflie_driver::GoTo srvGoTo_cf1;
-    srvGoTo_cf1.request.groupMask = 0;  // signal all CFs (I think?)
+    srvGoTo_cf1.request.groupMask = 0; // signal all CFs (I think?)
     crazyflie_driver::GoTo srvGoTo_cf2;
     srvGoTo_cf2.request.groupMask = 0;
     crazyflie_driver::GoTo srvGoTo_cf3;
@@ -229,12 +239,6 @@ int main(int argc, char **argv) {
     srvTakeoff.request.duration = ros::Duration(3.0);
     takeoffClient.call(srvTakeoff);
     ros::Duration(3.0).sleep();
-
-
-
-
-
-
 
     // srvGoTo_cf1.request.goal.x = 0.0;
     // srvGoTo_cf1.request.goal.y = 1.25;
@@ -263,106 +267,107 @@ int main(int argc, char **argv) {
     // GoToClient_cf4.call(srvGoTo_cf4);
     // ros::Duration(2.0).sleep();
 
-
-//     /* iLQR solver parameters */
-//     constexpr size_t horizon=5;
-//     constexpr int total_steps=300;
-//     unsigned int tag1(1),tag2(2),tag3(3),tag4(4),tag5(5),
-//                  tag6(6),tag7(7),tag8(8),tag9(9);
-//
-//     double time_step=0.2;
-//
-//
-//     /*First Order 2 Drone Simulation*/
-//
-// 	cost<12,12> drone2_running_cost(Drone_First_Order_Cost::running_cost2,tag7);
-// 	cost<12,12> drone2_terminal_cost(Drone_First_Order_Cost::terminal_cost2,tag8);
-// 	dynamics<12,12> drone2_dynamics(Drone_First_Order_Dynamics::dynamics_2,tag9,time_step);
-// 	iLQR<12,12,horizon>::input_trajectory u_init_drone2;
-// 	iLQR<12,12,horizon> drone2_solver(drone2_running_cost,drone2_terminal_cost,drone2_dynamics);
-// 	Eigen::Matrix<double,12,1> u_drone2=Eigen::Matrix<double,12,1>::Zero();
-// 	Eigen::Matrix<double,12,1> x0_drone2=Eigen::Matrix<double,12,1>::Zero();
-// 	Eigen::Matrix<double,12,1> x_goal_drone2;
-// 	iLQR<12,12,horizon>::state_input_trajectory soln_drone2;
-// 	iLQR<12,12,total_steps>::state_input_trajectory soln_drone2_rhc;
-//
-// 	//	u_drone2=u_drone2*sqrt(Drone_Dynamics::mass*Drone_Dynamics::g/(4*Drone_Dynamics::C_T));
-// 	std::fill(std::begin(u_init_drone2), std::end(u_init_drone2), u_drone2);
-//     for (auto &item : u_init_drone2)
-//         item = Eigen::Matrix<double,12,1>::Random()*5;
-//
-// //	iLQR<12*2,4*2,horizon>::state_input_trajectory soln_drone2;
-// //	iLQR<12*2,4*2,total_steps>::state_input_trajectory soln_drone2_rhc;
-//
-// 	clock_t t_start, t_end;
-//
-//
-// 	double seconds;
-// 	drone2_solver.set_MPC(u_init_drone2);
-// 	int execution_steps=1;
-// 	soln_drone2_rhc.first[0]=x0_drone2;
-// 	// std::string state_path="/Users/talhakavuncu/Desktop/research/cpp_code/states.txt";
-// 	// std::string input_path="/Users/talhakavuncu/Desktop/research/cpp_code/inputs.txt";
-// 	t_start = clock();
-//
-//     x_goal_drone2 << 1.25, 0.0, 2.5, 0,0,0,
-//                      0.0, 1.25,  2.5, 0,0,0;
+    //     /* iLQR solver parameters */
+    //     constexpr size_t horizon=5;
+    //     constexpr int total_steps=300;
+    //     unsigned int tag1(1),tag2(2),tag3(3),tag4(4),tag5(5),
+    //                  tag6(6),tag7(7),tag8(8),tag9(9);
+    //
+    //     double time_step=0.2;
+    //
+    //
+    //     /*First Order 2 Drone Simulation*/
+    //
+    // 	cost<12,12> drone2_running_cost(Drone_First_Order_Cost::running_cost2,tag7);
+    // 	cost<12,12> drone2_terminal_cost(Drone_First_Order_Cost::terminal_cost2,tag8);
+    // 	dynamics<12,12> drone2_dynamics(Drone_First_Order_Dynamics::dynamics_2,tag9,time_step);
+    // 	iLQR<12,12,horizon>::input_trajectory u_init_drone2;
+    // 	iLQR<12,12,horizon> drone2_solver(drone2_running_cost,drone2_terminal_cost,drone2_dynamics);
+    // 	Eigen::Matrix<double,12,1> u_drone2=Eigen::Matrix<double,12,1>::Zero();
+    // 	Eigen::Matrix<double,12,1> x0_drone2=Eigen::Matrix<double,12,1>::Zero();
+    // 	Eigen::Matrix<double,12,1> x_goal_drone2;
+    // 	iLQR<12,12,horizon>::state_input_trajectory soln_drone2;
+    // 	iLQR<12,12,total_steps>::state_input_trajectory soln_drone2_rhc;
+    //
+    // 	//	u_drone2=u_drone2*sqrt(Drone_Dynamics::mass*Drone_Dynamics::g/(4*Drone_Dynamics::C_T));
+    // 	std::fill(std::begin(u_init_drone2), std::end(u_init_drone2), u_drone2);
+    //     for (auto &item : u_init_drone2)
+    //         item = Eigen::Matrix<double,12,1>::Random()*5;
+    //
+    // //	iLQR<12*2,4*2,horizon>::state_input_trajectory soln_drone2;
+    // //	iLQR<12*2,4*2,total_steps>::state_input_trajectory soln_drone2_rhc;
+    //
+    // 	clock_t t_start, t_end;
+    //
+    //
+    // 	double seconds;
+    // 	drone2_solver.set_MPC(u_init_drone2);
+    // 	int execution_steps=1;
+    // 	soln_drone2_rhc.first[0]=x0_drone2;
+    // 	// std::string state_path="/Users/talhakavuncu/Desktop/research/cpp_code/states.txt";
+    // 	// std::string input_path="/Users/talhakavuncu/Desktop/research/cpp_code/inputs.txt";
+    // 	t_start = clock();
+    //
+    //     x_goal_drone2 << 1.25, 0.0, 2.5, 0,0,0,
+    //                      0.0, 1.25,  2.5, 0,0,0;
 
     while (ros::ok())
-//     // while (true)
-	{
-//
-//         ros::spinOnce();
-//
-//
-// 		x0_drone2 << CFState_cf1.x, CFState_cf1.y, CFState_cf1.z,
-//                      CFState_cf1.roll, CFState_cf1.pitch, CFState_cf1.yaw,
-//                      CFState_cf2.x, CFState_cf2.y, CFState_cf2.z,
-//                      CFState_cf2.roll, CFState_cf2.pitch, CFState_cf2.yaw;
-//
-//
-// 		soln_drone2=drone2_solver.run_MPC(x0_drone2,
-// 				x_goal_drone2, 50, 2, execution_steps);
-//
-//         /* Optimizer output logging */
-//         std::string data;
-//         for (int i = 0; i < horizon; ++i) {
-//             for (int q = 0; q < 12; ++q) {
-//                 data += std::to_string(soln_drone2.first[i][q]) + ",";
-//             }
-//
-//         }
-//         const auto p1 = std::chrono::system_clock::now();
-//     	data += std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p1.time_since_epoch()).count()) + "\n";
-//     	optimizerDatalogFile << data;
-//
-//         int idx_to_use = 3;
-//
-//         std::printf("\n#### SENDING WAYPOINT CF1  ");
-//         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_drone2.first[idx_to_use][0], soln_drone2.first[idx_to_use][1], soln_drone2.first[idx_to_use][2]);
-//         std::printf("\n#### SENDING WAYPOINT CF2   ");
-//         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_drone2.first[idx_to_use][6], soln_drone2.first[idx_to_use][7], soln_drone2.first[idx_to_use][8]);
-//
-//         srvGoTo_cf1.request.goal.x = soln_drone2.first[idx_to_use][0];
-//         srvGoTo_cf1.request.goal.y = soln_drone2.first[idx_to_use][1];
-//         srvGoTo_cf1.request.goal.z = soln_drone2.first[idx_to_use][2];
-//         srvGoTo_cf1.request.yaw = 0.0;
-//         srvGoTo_cf1.request.duration = ros::Duration(0.8);
-//         GoToClient_cf1.call(srvGoTo_cf1);
-//
-//         srvGoTo_cf2.request.goal.x = soln_drone2.first[idx_to_use][6];
-//         srvGoTo_cf2.request.goal.y = soln_drone2.first[idx_to_use][7];
-//         srvGoTo_cf2.request.goal.z = soln_drone2.first[idx_to_use][8];
-//         srvGoTo_cf2.request.yaw = 0.0;
-//         srvGoTo_cf2.request.duration = ros::Duration(0.8);
-//         GoToClient_cf2.call(srvGoTo_cf2);
-//
-        int c = getch();   // call your non-blocking input function
-        if (c == '\n') {
+    //     // while (true)
+    {
+        //
+        //         ros::spinOnce();
+        //
+        //
+        // 		x0_drone2 << CFState_cf1.x, CFState_cf1.y, CFState_cf1.z,
+        //                      CFState_cf1.roll, CFState_cf1.pitch, CFState_cf1.yaw,
+        //                      CFState_cf2.x, CFState_cf2.y, CFState_cf2.z,
+        //                      CFState_cf2.roll, CFState_cf2.pitch, CFState_cf2.yaw;
+        //
+        //
+        // 		soln_drone2=drone2_solver.run_MPC(x0_drone2,
+        // 				x_goal_drone2, 50, 2, execution_steps);
+        //
+        //         /* Optimizer output logging */
+        //         std::string data;
+        //         for (int i = 0; i < horizon; ++i) {
+        //             for (int q = 0; q < 12; ++q) {
+        //                 data += std::to_string(soln_drone2.first[i][q]) + ",";
+        //             }
+        //
+        //         }
+        //         const auto p1 = std::chrono::system_clock::now();
+        //     	data += std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p1.time_since_epoch()).count()) + "\n";
+        //     	optimizerDatalogFile << data;
+        //
+        //         int idx_to_use = 3;
+        //
+        //         std::printf("\n#### SENDING WAYPOINT CF1  ");
+        //         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_drone2.first[idx_to_use][0], soln_drone2.first[idx_to_use][1], soln_drone2.first[idx_to_use][2]);
+        //         std::printf("\n#### SENDING WAYPOINT CF2   ");
+        //         std::printf("X: %f,\t Y: %f,\t Z: %f\n", soln_drone2.first[idx_to_use][6], soln_drone2.first[idx_to_use][7], soln_drone2.first[idx_to_use][8]);
+        //
+        //         srvGoTo_cf1.request.goal.x = soln_drone2.first[idx_to_use][0];
+        //         srvGoTo_cf1.request.goal.y = soln_drone2.first[idx_to_use][1];
+        //         srvGoTo_cf1.request.goal.z = soln_drone2.first[idx_to_use][2];
+        //         srvGoTo_cf1.request.yaw = 0.0;
+        //         srvGoTo_cf1.request.duration = ros::Duration(0.8);
+        //         GoToClient_cf1.call(srvGoTo_cf1);
+        //
+        //         srvGoTo_cf2.request.goal.x = soln_drone2.first[idx_to_use][6];
+        //         srvGoTo_cf2.request.goal.y = soln_drone2.first[idx_to_use][7];
+        //         srvGoTo_cf2.request.goal.z = soln_drone2.first[idx_to_use][8];
+        //         srvGoTo_cf2.request.yaw = 0.0;
+        //         srvGoTo_cf2.request.duration = ros::Duration(0.8);
+        //         GoToClient_cf2.call(srvGoTo_cf2);
+        //
+        int c = getch(); // call your non-blocking input function
+        if (c == '\n')
+        {
             std::cout << "########## LANDING ##########" << std::endl;
             break;
         }
-        if (c == 'o') {
+        if (c == 'o')
+        {
             std::cout << "########## RETURN TO ORIGIN ##########" << std::endl;
             srvGoTo_cf1.request.goal.x = -0.2;
             srvGoTo_cf1.request.goal.y = 1.1;
@@ -379,25 +384,21 @@ int main(int argc, char **argv) {
             ros::Duration(3.0).sleep();
             break;
         }
-//
-//
-	}
-// 	t_end = clock();
-// ////
-// //////
-// ////////	soln_drone=drone_solver.solve_open_loop(X0_drone, X0_drone, 200, u_init_drone, horizon);
-// ////////	write_file<12,4,horizon>(state_path,input_path, soln_drone);
-// 	// write_file<12,12,total_steps>(state_path,input_path, soln_drone2_rhc);
-// ////
-// 	std::cout<<"finished"<<std::endl;
-// 	seconds = 1/((double)(t_end - t_start) / CLOCKS_PER_SEC/total_steps);
-// 	printf("Time: %f s\n", seconds);
-
+        //
+        //
+    }
+    // 	t_end = clock();
+    // ////
+    // //////
+    // ////////	soln_drone=drone_solver.solve_open_loop(X0_drone, X0_drone, 200, u_init_drone, horizon);
+    // ////////	write_file<12,4,horizon>(state_path,input_path, soln_drone);
+    // 	// write_file<12,12,total_steps>(state_path,input_path, soln_drone2_rhc);
+    // ////
+    // 	std::cout<<"finished"<<std::endl;
+    // 	seconds = 1/((double)(t_end - t_start) / CLOCKS_PER_SEC/total_steps);
+    // 	printf("Time: %f s\n", seconds);
 
     /*First Order 2 Drone Simulation Ends*/
-
-
-
 
     crazyflie_driver::Land srvLand;
     srvLand.request.duration = ros::Duration(3.0);
@@ -411,8 +412,6 @@ int main(int argc, char **argv) {
 /*############################################################################*/
 /*############################################################################*/
 /*############################################################################*/
-
-
 
 // /*First Order Drone Simulation */
 //
@@ -537,7 +536,6 @@ int main(int argc, char **argv) {
 //
 // /*First Order Drone Simulation Ends*/
 
-
 // /* This part is single drone simulation*/
 //
 //     cost<12,4> running_cost_dr(Drone_Cost::running_cost,tag1);
@@ -635,7 +633,6 @@ int main(int argc, char **argv) {
 //
 // /* End of single drone simulation*/
 
-
 // cost<3,3> integrator_running_cost(Single_Integrator_Cost::running_cost,tag7);
 // cost<3,3> integrator_terminal_cost(Single_Integrator_Cost::terminal_cost,tag8);
 // dynamics<3,3> integrator_dynamics(Single_Integrator_3D::dynamics,tag9,time_step);
@@ -728,9 +725,6 @@ int main(int argc, char **argv) {
 // std::cout<<"finished"<<std::endl;
 // seconds = 1/((double)(t_end - t_start) / CLOCKS_PER_SEC/total_steps);
 // printf("Time: %f s\n", seconds);
-
-
-
 
 // /* This part is single drone simulation*/
 //
@@ -828,12 +822,9 @@ int main(int argc, char **argv) {
 //
 // /* End of single drone simulation*/
 
-
 /*############################################################################*/
 /*############################################################################*/
 /*############################################################################*/
-
-
 
 // /* Simple moving average filter */
 // #if (USE_SMA_FILTER == 1)
@@ -911,45 +902,41 @@ int main(int argc, char **argv) {
 //
 // #endif
 
-
 // /* First order exponential low-pass filter */
 // #if (USE_EXP_FILTER == 1)
 
-    // float alpha = 0.9;
-    //
-    // CFState_cf1.x = (prevState_cf1.x * alpha) + (1.0 - alpha) * CFState_cf1.x;
-    // CFState_cf1.y = (prevState_cf1.y * alpha) + (1.0 - alpha) * CFState_cf1.y;
-    // CFState_cf1.z = (prevState_cf1.z * alpha) + (1.0 - alpha) * CFState_cf1.z;
-    // CFState_cf1.roll = (prevState_cf1.roll * alpha) + (1.0 - alpha) * CFState_cf1.roll;
-    // CFState_cf1.pitch = (prevState_cf1.pitch * alpha) + (1.0 - alpha) * CFState_cf1.pitch;
-    // CFState_cf1.yaw = (prevState_cf1.yaw * alpha) + (1.0 - alpha) * CFState_cf1.yaw;
-    // CFState_cf1.x_d = (prevState_cf1.x_d * alpha) + (1.0 - alpha) * CFState_cf1.x_d;
-    // CFState_cf1.y_d = (prevState_cf1.y_d * alpha) + (1.0 - alpha) * CFState_cf1.y_d;
-    // CFState_cf1.z_d = (prevState_cf1.z_d * alpha) + (1.0 - alpha) * CFState_cf1.z_d;
-    // CFState_cf1.roll_d = (prevState_cf1.roll_d * alpha) + (1.0 - alpha) * CFState_cf1.roll_d;
-    // CFState_cf1.pitch_d = (prevState_cf1.pitch_d * alpha) + (1.0 - alpha) * CFState_cf1.pitch_d;
-    // CFState_cf1.yaw_d = (prevState_cf1.yaw_d * alpha) + (1.0 - alpha) * CFState_cf1.yaw_d;
+// float alpha = 0.9;
+//
+// CFState_cf1.x = (prevState_cf1.x * alpha) + (1.0 - alpha) * CFState_cf1.x;
+// CFState_cf1.y = (prevState_cf1.y * alpha) + (1.0 - alpha) * CFState_cf1.y;
+// CFState_cf1.z = (prevState_cf1.z * alpha) + (1.0 - alpha) * CFState_cf1.z;
+// CFState_cf1.roll = (prevState_cf1.roll * alpha) + (1.0 - alpha) * CFState_cf1.roll;
+// CFState_cf1.pitch = (prevState_cf1.pitch * alpha) + (1.0 - alpha) * CFState_cf1.pitch;
+// CFState_cf1.yaw = (prevState_cf1.yaw * alpha) + (1.0 - alpha) * CFState_cf1.yaw;
+// CFState_cf1.x_d = (prevState_cf1.x_d * alpha) + (1.0 - alpha) * CFState_cf1.x_d;
+// CFState_cf1.y_d = (prevState_cf1.y_d * alpha) + (1.0 - alpha) * CFState_cf1.y_d;
+// CFState_cf1.z_d = (prevState_cf1.z_d * alpha) + (1.0 - alpha) * CFState_cf1.z_d;
+// CFState_cf1.roll_d = (prevState_cf1.roll_d * alpha) + (1.0 - alpha) * CFState_cf1.roll_d;
+// CFState_cf1.pitch_d = (prevState_cf1.pitch_d * alpha) + (1.0 - alpha) * CFState_cf1.pitch_d;
+// CFState_cf1.yaw_d = (prevState_cf1.yaw_d * alpha) + (1.0 - alpha) * CFState_cf1.yaw_d;
 
-    // CFState_cf2.x = (prevState_cf2.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x;
-    // CFState_cf2.y = (prevState_cf2.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y;
-    // CFState_cf2.z = (prevState_cf2.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z;
-    // CFState_cf2.roll = (prevState_cf2.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll;
-    // CFState_cf2.pitch = (prevState_cf2.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch;
-    // CFState_cf2.yaw = (prevState_cf2.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw;
-    // CFState_cf2.x_d = (prevState_cf2.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x_d;
-    // CFState_cf2.y_d = (prevState_cf2.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y_d;
-    // CFState_cf2.z_d = (prevState_cf2.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z_d;
-    // CFState_cf2.roll_d = (prevState_cf2.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll_d;
-    // CFState_cf2.pitch_d = (prevState_cf2.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch_d;
-    // CFState_cf2.yaw_d = (prevState_cf2.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw_d;
+// CFState_cf2.x = (prevState_cf2.x * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x;
+// CFState_cf2.y = (prevState_cf2.y * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y;
+// CFState_cf2.z = (prevState_cf2.z * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z;
+// CFState_cf2.roll = (prevState_cf2.roll * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll;
+// CFState_cf2.pitch = (prevState_cf2.pitch * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch;
+// CFState_cf2.yaw = (prevState_cf2.yaw * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw;
+// CFState_cf2.x_d = (prevState_cf2.x_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.x_d;
+// CFState_cf2.y_d = (prevState_cf2.y_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.y_d;
+// CFState_cf2.z_d = (prevState_cf2.z_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.z_d;
+// CFState_cf2.roll_d = (prevState_cf2.roll_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.roll_d;
+// CFState_cf2.pitch_d = (prevState_cf2.pitch_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.pitch_d;
+// CFState_cf2.yaw_d = (prevState_cf2.yaw_d * EXP_FILT_ALPHA) + (1.0 - EXP_FILT_ALPHA) * CFState_cf2.yaw_d;
 
-    // prevState_cf1 = CFState_cf1;
-    // prevState_cf2 = CFState_cf2;
+// prevState_cf1 = CFState_cf1;
+// prevState_cf2 = CFState_cf2;
 
 // #endif
-
-
-
 
 // /* Draw square trajectory */
 //
@@ -997,10 +984,6 @@ int main(int argc, char **argv) {
 // GoToClient_cf1.call(srvGoTo_cf2);
 //
 // ros::Duration(1.0).sleep();
-
-
-
-
 
 // /* Control loop */
 // while (ros::ok()) {

@@ -9,7 +9,7 @@
 #include <adolc/adolc.h>
 #include <Eigen/Dense>
 
-//void cost()
+// void cost()
 //{
 //	trace_on(1);
 //	int state_dim=4;
