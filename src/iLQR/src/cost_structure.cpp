@@ -1,56 +1,54 @@
-/*
- * cost_structure.cpp
- *
- *  Created on: Jan 20, 2021
- *      Author: talhakavuncu
- */
+#include <math.h>
 #include <iostream>
-#include <unsupported/Eigen/AdolcForward>
+
 #include <adolc/adolc.h>
 #include <Eigen/Dense>
-#include "cost_structure.h"
-#include <math.h>
-namespace Unicycle_Cost
+#include <unsupported/Eigen/AdolcForward>
 
+#include "cost_structure.h"
+
+namespace Unicycle_Cost
 {
+
 	adouble running_cost(const state_type_unicycle &x, const input_type_unicycle &u, const state_type_unicycle &x_goal)
 	{
 
 		adouble output, input_cost, state_cost;
 		state_type_unicycle diff = x - x_goal;
-		//	Eigen::Matrix<adouble,4,4> Q;
-		//	Eigen::Matrix<adouble,2,2> R;
-		//	Q<<1,0,0,0,
-		//		0,1,0,0,
-		//		0,0,1,0,
-		//		0,0,0,1;
+		// Eigen::Matrix<adouble, 4, 4> Q;
+		// Eigen::Matrix<adouble, 2, 2> R;
+		// Q << 1, 0, 0, 0,
+		// 	0, 1, 0, 0,
+		// 	0, 0, 1, 0,
+		// 	0, 0, 0, 1;
 
-		//		Q<<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;
-		//		R<<2,2,2,2;
-		//	R<<1,0,0,1;
-		//
-		//	intermediate=inputs.transpose()*R*inputs;//+inputs[0]*states[2];//inputs.dot(inputs)*states.dot(states);
-		//	output=diff.transpose()*Q*diff + intermediate;
+		// Q << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+		// R << 2, 2, 2, 2;
+		// R << 1, 0, 0, 1;
+
+		// intermediate = inputs.transpose() * R * inputs; //+inputs[0]*states[2];//inputs.dot(inputs)*states.dot(states);
+		// output = diff.transpose() * Q * diff + intermediate;
 		input_cost = u.dot(u);
 		state_cost = diff.dot(diff);
 		output = input_cost + state_cost;
 		return output;
 	};
+
 	adouble terminal_cost(const state_type_unicycle &x, const input_type_unicycle &u, const state_type_unicycle &x_goal)
 	{
 
 		adouble output;
 		state_type_unicycle diff = x - x_goal;
 
-		//		Eigen::Matrix<adouble,4,4> Q;
-		//		Q<<1,0,0,0,
-		//			0,1,0,0,
-		//			0,0,1,0,
-		//			0,0,0,1;
-		//		Eigen::Matrix<adouble,2,2> R;
-		//		R<<2,2,2,2;
-		//		R<<1,1,1,1;
-		//		intermediate=inputs.transpose()*R*inputs;//+inputs[0]*states[2];//inputs.dot(inputs)*states.dot(states);
+		// Eigen::Matrix<adouble, 4, 4> Q;
+		// Q << 1, 0, 0, 0,
+		// 	0, 1, 0, 0,
+		// 	0, 0, 1, 0,
+		// 	0, 0, 0, 1;
+		// Eigen::Matrix<adouble, 2, 2> R;
+		// R << 2, 2, 2, 2;
+		// R << 1, 1, 1, 1;
+		// intermediate = inputs.transpose() * R * inputs; //+inputs[0]*states[2];//inputs.dot(inputs)*states.dot(states);
 
 		output = 100 * diff.dot(diff);
 		return output;
@@ -63,7 +61,6 @@ namespace Unicycle_Cost
 		int col_size = 2;
 
 		adouble d_prox = 1.2;
-		//		adouble c_ij_costs[1][2]={{0}};
 		std::vector<std::vector<adouble>> c_ij_costs(row_size, std::vector<adouble>(col_size));
 		for (int i = 0; i < row_size; ++i)
 			for (int j = i + 1; j < col_size; ++j)
@@ -77,6 +74,7 @@ namespace Unicycle_Cost
 		output = input_cost + state_cost + ca_total;
 		return output;
 	};
+
 	adouble terminal_cost2(const state_type_unicycle2 &x, const input_type_unicycle2 &u, const state_type_unicycle2 &x_goal)
 	{
 		adouble output;
@@ -92,7 +90,6 @@ namespace Unicycle_Cost
 		int col_size = 3;
 
 		adouble d_prox = 0.6;
-		//		adouble c_ij_costs[1][2]={{0}};
 		std::vector<std::vector<adouble>> c_ij_costs(row_size, std::vector<adouble>(col_size));
 		for (int i = 0; i < row_size; ++i)
 			for (int j = i + 1; j < col_size; ++j)
@@ -105,6 +102,7 @@ namespace Unicycle_Cost
 		output = input_cost + state_cost;
 		return output;
 	};
+
 	adouble terminal_cost3(const state_type_unicycle3 &x, const input_type_unicycle3 &u, const state_type_unicycle3 &x_goal)
 	{
 		adouble output;
@@ -120,7 +118,6 @@ namespace Unicycle_Cost
 		int col_size = 4;
 
 		adouble d_prox = 0.6;
-		//		adouble c_ij_costs[1][2]={{0}};
 		std::vector<std::vector<adouble>> c_ij_costs(row_size, std::vector<adouble>(col_size));
 		for (int i = 0; i < row_size; ++i)
 			for (int j = i + 1; j < col_size; ++j)
@@ -133,6 +130,7 @@ namespace Unicycle_Cost
 		output = input_cost + state_cost;
 		return output;
 	};
+
 	adouble terminal_cost4(const state_type_unicycle4 &x, const input_type_unicycle4 &u, const state_type_unicycle4 &x_goal)
 	{
 		adouble output;
@@ -148,7 +146,6 @@ namespace Unicycle_Cost
 		int col_size = 6;
 
 		adouble d_prox = 0.6;
-		//		adouble c_ij_costs[1][2]={{0}};
 		std::vector<std::vector<adouble>> c_ij_costs(row_size, std::vector<adouble>(col_size));
 		for (int i = 0; i < row_size; ++i)
 			for (int j = i + 1; j < col_size; ++j)
@@ -161,6 +158,7 @@ namespace Unicycle_Cost
 		output = input_cost + state_cost;
 		return output;
 	};
+
 	adouble terminal_cost6(const state_type_unicycle6 &x, const input_type_unicycle6 &u, const state_type_unicycle6 &x_goal)
 	{
 		adouble output;

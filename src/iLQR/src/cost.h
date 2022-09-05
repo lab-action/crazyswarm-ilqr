@@ -1,24 +1,12 @@
-// This file is part of Eigen, a lightweight C++ template library
-// for linear algebra.
-//
-// Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
-//
-// This Source Code Form is subject to the terms of the Mozilla
-// Public License v. 2.0. If a copy of the MPL was not distributed
-// with this file, You can obtain one at https://urldefense.com/v3/__http://mozilla.org/MPL/2.0/__;!!DZ3fjg!v5H_MtY41GsBht4EP2ryGNiJdIFmlmHnuOaL04RB_wTTVM4Cx7iADjAmTBDYHKPPtEIG$ .
 #ifndef COST_H_
 #define COST_H_
-#include <unsupported/Eigen/AdolcForward>
+
 #include <adolc/adolc.h>
 #include <Eigen/Dense>
+#include <unsupported/Eigen/AdolcForward>
+
 #include "cost_structure.h"
 
-// typedef Eigen::Matrix<adouble,Eigen::Dynamic,Eigen::Dynamic> mat_type;
-
-// typedef Eigen::Matrix<double,Eigen::Dynamic,1> vec_type_d;
-// typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> input_type;
-// adouble running_cost(const vec_type & states,const vec_type & inputs);
-// adouble terminal_cost(const vec_type & states,const vec_type & inputs);
 template <size_t state_size, size_t input_size>
 class cost
 {
@@ -34,17 +22,16 @@ public:
 	typedef Eigen::Matrix<double, input_size, 1> input_type;
 	typedef Eigen::Matrix<double, state_size + input_size + 1, state_size + input_size + 1> tensor_type;
 
-	//	cost(const mat_type &Q,const mat_type &R);
 	cost(cost_type cost_fun, unsigned int tag);
-	//	cost(){};
-	//	double eval(const double * const state,const double * const input);
 	double eval(const state_type &states, const input_type &inputs);
+
 	state_type _x(const state_type &states, const input_type &inputs);
 	input_type _u(const state_type &states, const input_type &inputs);
 	mat_type1 _xx(const state_type &states, const input_type &inputs);
 	mat_type2 _uu(const state_type &states, const input_type &inputs);
 	mat_type3 _ux(const state_type &states, const input_type &inputs);
 	tensor_type evaluate_tensor(const state_type &states, const input_type &inputs, state_type &X_goal);
+
 	unsigned int get_tag();
 	int get_state_size();
 	int get_input_size();
@@ -52,15 +39,14 @@ public:
 private:
 	unsigned int tag;
 	adouble (*cost_fun)(const state_type_tensor &states, const input_type_tensor &inputs, const state_type_tensor &X_goal);
-	//	int state_size;
-	//	int input_size;
-	//	Eigen::MatrixXd values(state_size+input_size+1,state_size+input_size+1);
+
 	tensor_type values;
 	state_type _x_val;
 	input_type _u_val;
 	mat_type1 _xx_val;
 	mat_type2 _uu_val;
 	mat_type3 _ux_val;
+
 	int num_in_vars = state_size + input_size;
 	int tensor_dim = (num_in_vars + 2) * (num_in_vars + 1) / 2;
 	double **S = myalloc(num_in_vars, num_in_vars);
@@ -184,30 +170,5 @@ cost<state_size, input_size>::_u(const state_type &states, const input_type &inp
 {
 	return values.block(1 + state_size, 0, input_size, 1);
 }
-// Eigen::MatrixXd cost::_uu(const Eigen::VectorXd &states,const Eigen::VectorXd &inputs)
-//{
-//	return values.block(state_size+1, state_size+1, input_size, input_size);
-// }
-//
-// Eigen::MatrixXd cost::_ux(const Eigen::VectorXd &states,const Eigen::VectorXd &inputs)
-//{
-//	return values.block(state_size+1, 1, input_size, state_size);
-// }
-// Eigen::MatrixXd cost::_x(const Eigen::VectorXd &states,const Eigen::VectorXd &inputs)
-//{
-//	return values.block(1, 0, state_size, 1);
-// }
-// Eigen::MatrixXd cost::_u(const Eigen::VectorXd &states,const Eigen::VectorXd &inputs)
-//{
-//	return values.block(1+state_size, 0, input_size, 1);
-// }
-// int cost::get_state_size()
-//{
-//	return this->state_size;
-// }
-// int cost::get_input_size()
-//{
-//	return this->input_size;
-// }
 
 #endif

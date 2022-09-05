@@ -1,17 +1,9 @@
-/*
- * dynamics_structure.h
- *
- *  Created on: Jan 21, 2021
- *      Author: talhakavuncu
- */
-
 #ifndef DYNAMICS_STRUCTURE_H_
 #define DYNAMICS_STRUCTURE_H_
 
-//#include <iostream>
 #include <unsupported/Eigen/AdolcForward>
-//#include <adolc.h>
 #include <Eigen/Dense>
+
 #include "dynamics.h"
 
 namespace Unicycle_Dynamics
@@ -76,6 +68,7 @@ namespace Single_Integrator_3D
 	state_tensor2 dynamics2(const state_tensor2 &x, const input_tensor2 &u);
 
 }
+
 namespace Double_Integrator_3D
 {
 	const double mb = 1;
@@ -90,6 +83,7 @@ namespace Double_Integrator_3D
 	state_tensor2 dynamics2(const state_tensor2 &x, const input_tensor2 &u);
 
 }
+
 namespace Drone_First_Order_Dynamics
 {
 	typedef Eigen::Matrix<adouble, 6, 1> drone_state_tensor;
@@ -98,16 +92,7 @@ namespace Drone_First_Order_Dynamics
 	typedef Eigen::Matrix<adouble, 6 * 2, 1> drone2_state_tensor;
 	typedef Eigen::Matrix<adouble, 6 * 2, 1> drone2_input_tensor;
 
-	//	const double C_T=3.1582*1e-10;
-	//	const double C_D=7.9379*1e-12;
-	//	const double g=9.80665;
-	//	const double d=39.73*1e-3;
-	//	const double I_xx=1.395*1e-5;
-	//	const double I_yy=1.436*1e-5;
-	//	const double I_zz=2.173*1e-5;
-	//	const double mass=0.033;
 	drone_state_tensor dynamics(const drone_state_tensor &X, const drone_input_tensor &input);
-
 	drone2_state_tensor dynamics_2(const drone2_state_tensor &x, const drone2_input_tensor &u);
 
 }

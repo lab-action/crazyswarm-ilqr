@@ -1,19 +1,10 @@
-/*
- * utils.cpp
- *
- *  Created on: Jan 26, 2021
- *      Author: talhakavuncu
- */
-#ifndef UTILS_CPP_
-#define UTILS_CPP_
-
 #include <string>
 #include <time.h>
 #include <chrono>
 
 #include "utils.h"
 
-// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+// Get current date/time, format is YYYY-MM-DD_HH.mm.ss
 const std::string currentDateTime()
 {
 	time_t now = time(0);
@@ -22,7 +13,7 @@ const std::string currentDateTime()
 	tstruct = *localtime(&now);
 	// Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
 	// for more information about date/time format
-	strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+	strftime(buf, sizeof(buf), "%Y-%m-%d_%H.%M.%S", &tstruct);
 
 	return buf;
 }
@@ -59,5 +50,3 @@ void logDroneStates(std::ofstream &file, std::vector<stateVector> states)
 
 	file << data;
 }
-
-#endif

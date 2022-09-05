@@ -1,20 +1,9 @@
-/*
- * cost_structure.h
- *
- *  Created on: Jan 21, 2021
- *      Author: talhakavuncu
- */
-
 #ifndef COST_STRUCTURE_H_
 #define COST_STRUCTURE_H_
 
-//#include <iostream>
-#include <unsupported/Eigen/AdolcForward>
 #include <adolc/adolc.h>
 #include <Eigen/Dense>
-//#include "cost.h"
-// typedef Eigen::Matrix<adouble,Eigen::Dynamic,1> vec_type;
-// template<size_t state_size,size_t input_size>
+#include <unsupported/Eigen/AdolcForward>
 
 namespace Unicycle_Cost
 {
@@ -50,7 +39,6 @@ namespace Unicycle_Cost
 
 namespace Drone_Cost
 {
-	//	adouble C_T,C_D,g,d,I_xx,I_yy,I_zz,mass;
 	const double C_T = 3.1582 * 1e-10;
 	const double C_D = 7.9379 * 1e-12;
 	const double g = 9.80665;
@@ -59,12 +47,12 @@ namespace Drone_Cost
 	const double I_yy = 1.436 * 1e-5;
 	const double I_zz = 2.173 * 1e-5;
 	const double mass = 0.033;
+
 	typedef Eigen::Matrix<adouble, 12, 1> state_type_drone;
-	//	typedef Eigen::Matrix<double,12,1> goal_type_drone;
 	typedef Eigen::Matrix<adouble, 4, 1> input_type_drone;
 	typedef Eigen::Matrix<adouble, 12 * 2, 1> state_type_drone2;
-	//	typedef Eigen::Matrix<double,12*2,1> goal_type_drone2;
 	typedef Eigen::Matrix<adouble, 4 * 2, 1> input_type_drone2;
+
 	adouble running_cost(const state_type_drone &states, const input_type_drone &inputs, const state_type_drone &X_goal);
 	adouble terminal_cost(const state_type_drone &states, const input_type_drone &inputs, const state_type_drone &X_goal);
 
@@ -101,11 +89,10 @@ namespace Double_Integrator_Cost
 namespace Drone_First_Order_Cost
 {
 	typedef Eigen::Matrix<adouble, 6, 1> state_type_drone;
-	//	typedef Eigen::Matrix<double,12,1> goal_type_drone;
 	typedef Eigen::Matrix<adouble, 6, 1> input_type_drone;
 	typedef Eigen::Matrix<adouble, 6 * 2, 1> state_type_drone2;
-	//	typedef Eigen::Matrix<double,12*2,1> goal_type_drone2;
 	typedef Eigen::Matrix<adouble, 6 * 2, 1> input_type_drone2;
+
 	adouble running_cost(const state_type_drone &states, const input_type_drone &inputs, const state_type_drone &X_goal);
 	adouble terminal_cost(const state_type_drone &states, const input_type_drone &inputs, const state_type_drone &X_goal);
 

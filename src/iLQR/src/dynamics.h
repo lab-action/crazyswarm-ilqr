@@ -1,22 +1,11 @@
-/*
- * dynamics.h
- *
- *  Created on: Jan 20, 2021
- *      Author: talhakavuncu
- */
-
 #ifndef DYNAMICS_H_
 #define DYNAMICS_H_
 
-#include <unsupported/Eigen/AdolcForward>
 #include <adolc/adolc.h>
 #include <Eigen/Dense>
+#include <unsupported/Eigen/AdolcForward>
+
 #include "dynamics_structure.h"
-// template <typename Derived>
-// typedef Eigen::Matrix<adouble,Eigen::Dynamic,Eigen::Dynamic> mat_type;
-// typedef Eigen::Matrix<adouble,Eigen::Dynamic,1> vec_type;
-////typedef Eigen::Matrix<double,Eigen::Dynamic,1> vec_type_d;
-// typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> input_type;
 
 template <size_t state_size, size_t input_size>
 class dynamics

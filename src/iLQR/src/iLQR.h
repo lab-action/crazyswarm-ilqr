@@ -1,10 +1,3 @@
-/*
- * iLQR.h
- *
- *  Created on: Jan 21, 2021
- *      Author: talhakavuncu
- */
-
 #ifndef ILQR_H_
 #define ILQR_H_
 #include "cost.h"
@@ -49,7 +42,7 @@ public:
 		this->horizon = hrzn;
 		this->state_size = st_sz;
 		this->action_size = ac_sz;
-		std::cout << "this is constructor" << std::endl;
+
 		mu = 1.0;
 		mu_min = 1e-6;
 		mu_max = 1e300;
@@ -58,13 +51,9 @@ public:
 		tol = 1e-8;
 		iteration_count = 0;
 
-		//		std::cout<<L[0]<<std::endl;
 		alphas = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 		std::for_each(alphas.begin(), alphas.end(), [](double &a)
 					  { a = pow(1.1, -a * a); });
-		//		for(double i :alphas)std::cout<<i<<" ";
-		//		std::cout<<alphas[4];
-		//		for(double i: )
 	};
 
 	state_input_trajectory solve_open_loop(const state_type &X0, state_type &Xgoal, int n_iterations,
