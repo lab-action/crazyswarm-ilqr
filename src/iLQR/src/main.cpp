@@ -11,6 +11,7 @@
 #include <iterator>
 #include <vector>
 #include <thread>
+#include <tuple>
 
 #include <adolc/adolc.h>
 #include <adolc/adouble.h>
@@ -29,18 +30,53 @@ namespace fs = std::filesystem;
 
 unsigned int tag1(1), tag2(2), tag3(3), tag4(4), tag5(5), tag6(6), tag7(7), tag8(8), tag9(9);
 
-constexpr size_t horizon = 10;
-constexpr int total_steps = 10;
-constexpr int total_subs_steps = 1;
+constexpr size_t horizon = 40;
+constexpr int total_steps = 50;
+constexpr int total_subs_steps = 0;
 const fs::path src_dir = fs::current_path();
 
-double time_step = 0.1;
+std::tuple<float, size_t, size_t> parse_args(int argc, char **argv)
+{
+	// Argument parser to assign some things at runtime. However, because of the way
+	// the iLQR solvers were templated, this isn't possible for horizon and steps.
+	float dt = 0.1;
+	size_t horizon = 40;
+	size_t steps = 50;
 
-void single_unicycle()
+	opterr = 0;
+	int arg;
+
+	while ((arg = getopt(argc, argv, "t:N:s:")) != -1)
+	{
+		switch (arg)
+		{
+		case 't':
+			dt = strtod(optarg, NULL);
+			break;
+		case 'N':
+			horizon = strtoul(optarg, NULL, 10);
+			break;
+		case 's':
+			steps = strtoul(optarg, NULL, 10);
+			break;
+		case '?':
+			fprintf(stderr,
+					"Usage:\n\t./sim [-t <time-step=%.3f>] [-N <horizon=%li>] [-s <steps=%li>]",
+					dt, horizon, steps);
+			abort();
+		default:
+			break;
+		}
+	}
+
+	return std::make_tuple(dt, horizon, steps);
+}
+
+void single_unicycle(const float dt)
 {
 	cost<4, 2> running_cost_uni(Unicycle_Cost::running_cost, tag1);
 	cost<4, 2> terminal_cost_uni(Unicycle_Cost::terminal_cost, tag2);
-	dynamics<4, 2> dynamics_uni(Unicycle_Dynamics::dynamics, tag3, time_step);
+	dynamics<4, 2> dynamics_uni(Unicycle_Dynamics::dynamics, tag3, dt);
 
 	iLQR<4, 2, horizon>::input_trajectory u_init_uni;
 	iLQR<4, 2, horizon> uni_solver(running_cost_uni, terminal_cost_uni, dynamics_uni);
@@ -84,11 +120,11 @@ void single_unicycle()
 	std::cout << "finished" << std::endl;
 }
 
-void two_unicycles()
+void two_unicycles(const float dt)
 {
 	cost<8, 4> running_cost_uni2(Unicycle_Cost::running_cost2, tag1);
 	cost<8, 4> terminal_cost_uni2(Unicycle_Cost::terminal_cost2, tag2);
-	dynamics<8, 4> dynamics_uni2(Unicycle_Dynamics::dynamics_2, tag3, time_step);
+	dynamics<8, 4> dynamics_uni2(Unicycle_Dynamics::dynamics_2, tag3, dt);
 
 	iLQR<8, 4, horizon> uni2_solver(running_cost_uni2, terminal_cost_uni2, dynamics_uni2);
 	iLQR<8, 4, horizon>::input_trajectory u_init_uni2;
@@ -130,14 +166,13 @@ void two_unicycles()
 	printf("Time: %f s\n", seconds);
 
 	write_file<8, 4, total_steps>(state_path, input_path, soln_uni2_rhc);
-	std::cout << "finished" << std::endl;
 }
 
-void single_drone()
+void single_drone(const float dt)
 {
 	cost<12, 4> running_cost_dr(Drone_Cost::running_cost, tag1);
 	cost<12, 4> terminal_cost_dr(Drone_Cost::terminal_cost, tag2);
-	dynamics<12, 4> dynamics_dr(Drone_Dynamics::dynamics, tag3, time_step);
+	dynamics<12, 4> dynamics_dr(Drone_Dynamics::dynamics, tag3, dt);
 
 	iLQR<12, 4, horizon> drone_solver(running_cost_dr, terminal_cost_dr, dynamics_dr);
 	Eigen::Matrix<double, 4, 1> u_drone = Eigen::Matrix<double, 4, 1>::Ones();
@@ -180,11 +215,11 @@ void single_drone()
 	std::cout << "finished" << std::endl;
 }
 
-void two_drones()
+void two_drones(const float dt)
 {
 	cost<12 * 2, 4 * 2> running_cost_dr2(Drone_Cost::running_cost2, tag4);
 	cost<12 * 2, 4 * 2> terminal_cost_dr2(Drone_Cost::terminal_cost2, tag5);
-	dynamics<12 * 2, 4 * 2> dynamics_dr2(Drone_Dynamics::dynamics_2, tag6, time_step);
+	dynamics<12 * 2, 4 * 2> dynamics_dr2(Drone_Dynamics::dynamics_2, tag6, dt);
 	iLQR<12 * 2, 4 * 2, horizon>::input_trajectory u_init_drone2;
 
 	iLQR<12 * 2, 4 * 2, horizon>::state_input_trajectory soln_drone2;
@@ -235,12 +270,12 @@ void two_drones()
 	std::cout << "finished" << std::endl;
 }
 
-void single_integrator()
+void single_integrator(const float dt)
 {
 
 	cost<3, 3> integrator_running_cost(Single_Integrator_Cost::running_cost, tag7);
 	cost<3, 3> integrator_terminal_cost(Single_Integrator_Cost::terminal_cost, tag8);
-	dynamics<3, 3> integrator_dynamics(Single_Integrator_3D::dynamics, tag9, time_step);
+	dynamics<3, 3> integrator_dynamics(Single_Integrator_3D::dynamics, tag9, dt);
 	iLQR<3, 3, horizon> integrator_solver(integrator_running_cost, integrator_terminal_cost, integrator_dynamics);
 
 	iLQR<3, 3, horizon>::state_input_trajectory soln_integrator;
@@ -283,11 +318,11 @@ void single_integrator()
 	write_file<3, 3, total_steps>(state_path, input_path, soln_integrator_rhc);
 }
 
-void two_single_integrators()
+void two_single_integrators(const float dt)
 {
 	cost<6, 6> integrator2_running_cost(Single_Integrator_Cost::running_cost2, tag7);
 	cost<6, 6> integrator2_terminal_cost(Single_Integrator_Cost::terminal_cost2, tag8);
-	dynamics<6, 6> integrator2_dynamics(Single_Integrator_3D::dynamics2, tag9, time_step);
+	dynamics<6, 6> integrator2_dynamics(Single_Integrator_3D::dynamics2, tag9, dt);
 
 	iLQR<6, 6, horizon>::input_trajectory u_init_integrator2;
 	iLQR<6, 6, horizon> integrator2_solver(integrator2_running_cost, integrator2_terminal_cost, integrator2_dynamics);
@@ -328,11 +363,11 @@ void two_single_integrators()
 	write_file<6, 6, total_steps>(state_path, input_path, soln_integrator2_rhc);
 }
 
-void double_integrator()
+void double_integrator(const float dt)
 {
 	cost<6, 3> integrator_running_cost(Double_Integrator_Cost::running_cost, tag7);
 	cost<6, 3> integrator_terminal_cost(Double_Integrator_Cost::terminal_cost, tag8);
-	dynamics<6, 3> integrator_dynamics(Double_Integrator_3D::dynamics, tag9, time_step);
+	dynamics<6, 3> integrator_dynamics(Double_Integrator_3D::dynamics, tag9, dt);
 
 	iLQR<6, 3, horizon>::input_trajectory u_init_integrator;
 	iLQR<6, 3, horizon> integrator_solver(integrator_running_cost, integrator_terminal_cost, integrator_dynamics);
@@ -376,11 +411,11 @@ void double_integrator()
 	write_file<6, 3, total_steps>(state_path, input_path, soln_integrator_rhc);
 }
 
-void first_order_drone()
+void first_order_drone(const float dt)
 {
 	cost<6, 6> drone_running_cost(Drone_First_Order_Cost::running_cost, tag7);
 	cost<6, 6> drone_terminal_cost(Drone_First_Order_Cost::terminal_cost, tag8);
-	dynamics<6, 6> drone_dynamics(Drone_First_Order_Dynamics::dynamics, tag9, time_step);
+	dynamics<6, 6> drone_dynamics(Drone_First_Order_Dynamics::dynamics, tag9, dt);
 
 	iLQR<6, 6, horizon>::input_trajectory u_init_drone;
 	iLQR<6, 6, horizon> drone_solver(drone_running_cost, drone_terminal_cost, drone_dynamics);
@@ -424,11 +459,11 @@ void first_order_drone()
 	write_file<6, 6, total_steps>(state_path, input_path, soln_drone_rhc);
 }
 
-void two_first_order_drones()
+void two_first_order_drones(const float dt)
 {
 	cost<12, 12> drone2_running_cost(Drone_First_Order_Cost::running_cost2, tag7);
 	cost<12, 12> drone2_terminal_cost(Drone_First_Order_Cost::terminal_cost2, tag8);
-	dynamics<12, 12> drone2_dynamics(Drone_First_Order_Dynamics::dynamics_2, tag9, time_step);
+	dynamics<12, 12> drone2_dynamics(Drone_First_Order_Dynamics::dynamics_2, tag9, dt);
 
 	iLQR<12, 12, horizon>::input_trajectory u_init_drone2;
 	iLQR<12, 12, horizon> drone2_solver(drone2_running_cost, drone2_terminal_cost, drone2_dynamics);
@@ -526,14 +561,19 @@ int main(int argc, char **argv)
 	// Set a pseudorandom seed for reproducibility of results.
 	srand((unsigned int)time(0));
 
-	// single_unicycle();
-	// two_unicycles();
-	// single_drone();
-	// two_drones();
-	// single_integrator();
-	// two_single_integrators();
-	// first_order_drone();
-	two_first_order_drones();
+	float dt;
+	size_t horizon, steps;
+	std::tie(dt, horizon, steps) = parse_args(argc, argv);
+
+	// single_unicycle(dt);
+	two_unicycles(dt);
+	// single_drone(dt);
+	// two_drones(dt);
+	// single_integrator(dt);
+	// two_single_integrators(dt);
+	// first_order_drone(dt);
+	// two_first_order_drones(dt);
+	// two_drones_6d(dt);
 
 	return 0;
 };
