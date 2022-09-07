@@ -97,4 +97,19 @@ namespace Drone_First_Order_Dynamics
 
 }
 
+namespace Drone6D_Dynamics
+{
+	const double g = 9.80665;
+
+	typedef Eigen::Matrix<adouble, 6, 1> drone_state_tensor;
+	typedef Eigen::Matrix<adouble, 6, 1> drone_input_tensor;
+
+	typedef Eigen::Matrix<adouble, 6 * 2, 1> drone2_state_tensor;
+	typedef Eigen::Matrix<adouble, 6 * 2, 1> drone2_input_tensor;
+
+	drone_state_tensor dynamics(const drone_state_tensor &x, const drone_input_tensor &u);
+	drone2_state_tensor dynamics_2(const drone2_state_tensor &x, const drone2_input_tensor &u);
+
+}
+
 #endif /* DYNAMICS_STRUCTURE_H_ */

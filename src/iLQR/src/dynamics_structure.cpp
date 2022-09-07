@@ -250,3 +250,28 @@ namespace Drone_First_Order_Dynamics
 		return X_dot;
 	}
 }
+
+namespace Drone6D_Dynamics
+{
+
+	drone_state_tensor dynamics(const drone_state_tensor &x, const drone_input_tensor &u)
+	{
+		/* x: [px, py, pz, vx, vy, vz]
+		   u: [tau, phi, theta]
+		*/
+		drone_state_tensor x_dot;
+		x_dot << x[3], x[4], x[5], g * tan(u[2]), -g * tan(u[1]), u[0] - g;
+		return x_dot;
+	}
+
+	drone2_state_tensor dynamics_2(const drone2_state_tensor &x, const drone2_input_tensor &u)
+	{
+		drone2_state_tensor X_dot;
+		drone_state_tensor X_dot1, X_dot2;
+		X_dot1 = dynamics(x.segment(0, 6), u.segment(0, 6));
+		X_dot2 = dynamics(x.segment(6, 6), u.segment(6, 6));
+		X_dot << X_dot1, X_dot2;
+		return X_dot;
+	}
+
+}

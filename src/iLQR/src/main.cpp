@@ -472,8 +472,57 @@ void two_first_order_drones()
 	write_file<12, 12, total_steps>(state_path, input_path, soln_drone2_rhc);
 }
 
-int main()
+void two_drones_6d(const float dt)
 {
+	cost<12, 12> drone2_running_cost(Drone_First_Order_Cost::running_cost2, tag7);
+	cost<12, 12> drone2_terminal_cost(Drone_First_Order_Cost::terminal_cost2, tag8);
+	dynamics<12, 12> drone2_dynamics(Drone_First_Order_Dynamics::dynamics_2, tag9, dt);
+
+	iLQR<12, 12, horizon>::input_trajectory u_init_drone2;
+	iLQR<12, 12, horizon> drone2_solver(drone2_running_cost, drone2_terminal_cost, drone2_dynamics);
+
+	Eigen::Matrix<double, 12, 1> u_drone2 = Eigen::Matrix<double, 12, 1>::Zero();
+	Eigen::Matrix<double, 12, 1> x0_drone2;
+	Eigen::Matrix<double, 12, 1> x_goal_drone2;
+
+	iLQR<12, 12, horizon>::state_input_trajectory soln_drone2;
+	iLQR<12, 12, total_steps>::state_input_trajectory soln_drone2_rhc;
+
+	u_drone2 = u_drone2 * sqrt(Drone_Dynamics::mass * Drone_Dynamics::g / (4 * Drone_Dynamics::C_T));
+	std::fill(std::begin(u_init_drone2), std::end(u_init_drone2), u_drone2);
+
+	x0_drone2 << -3, 0, 2.1, 0, 0, 0, 3, 0, 2, 0, 0, 0;
+	x_goal_drone2 << 3, 0, 2, 0, 0, 0, -3, 0, 2, 0, 0, 0;
+
+	drone2_solver.set_MPC(u_init_drone2);
+	soln_drone2_rhc.first[0] = x0_drone2;
+
+	clock_t t_start, t_end;
+	double seconds;
+	int execution_steps = 1;
+
+	fs::path state_path = fs::current_path() / "states.txt";
+	fs::path input_path = fs::current_path() / "inputs.txt";
+
+	t_start = clock();
+	for (int i = 0; i < total_steps; ++i)
+	{
+		soln_drone2 = drone2_solver.run_MPC(soln_drone2_rhc.first[i], x_goal_drone2,
+											total_steps, total_subs_steps,
+											execution_steps);
+		soln_drone2_rhc.first[i + 1] = soln_drone2.first[1];
+		soln_drone2_rhc.second[i] = soln_drone2.second[0];
+	}
+	t_end = clock();
+	seconds = 1 / ((double)(t_end - t_start) / CLOCKS_PER_SEC / total_steps);
+	printf("Time: %f s\n", seconds);
+
+	write_file<12, 12, total_steps>(state_path, input_path, soln_drone2_rhc);
+}
+
+int main(int argc, char **argv)
+{
+
 	// Set a pseudorandom seed for reproducibility of results.
 	srand((unsigned int)time(0));
 
