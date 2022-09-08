@@ -11,7 +11,6 @@
 #include <iterator>
 #include <vector>
 #include <thread>
-#include <tuple>
 
 #include <adolc/adolc.h>
 #include <adolc/adouble.h>
@@ -26,6 +25,8 @@
 #include "utils.h"
 // #include "DataStreamClient.h"
 
+#define DEFAULT_TIMESTEP 0.1
+
 namespace fs = std::filesystem;
 
 unsigned int tag1(1), tag2(2), tag3(3), tag4(4), tag5(5), tag6(6), tag7(7), tag8(8), tag9(9);
@@ -35,13 +36,11 @@ constexpr int total_steps = 50;
 constexpr int total_subs_steps = 0;
 const fs::path src_dir = fs::current_path();
 
-std::tuple<float, size_t, size_t> parse_args(int argc, char **argv)
+float parse_args(int argc, char **argv)
 {
 	// Argument parser to assign some things at runtime. However, because of the way
 	// the iLQR solvers were templated, this isn't possible for horizon and steps.
-	float dt = 0.1;
-	size_t horizon = 40;
-	size_t steps = 50;
+	float dt = DEFAULT_TIMESTEP;
 
 	opterr = 0;
 	int arg;
@@ -53,23 +52,15 @@ std::tuple<float, size_t, size_t> parse_args(int argc, char **argv)
 		case 't':
 			dt = strtod(optarg, NULL);
 			break;
-		case 'N':
-			horizon = strtoul(optarg, NULL, 10);
-			break;
-		case 's':
-			steps = strtoul(optarg, NULL, 10);
-			break;
 		case '?':
-			fprintf(stderr,
-					"Usage:\n\t./sim [-t <time-step=%.3f>] [-N <horizon=%li>] [-s <steps=%li>]",
-					dt, horizon, steps);
+			fprintf(stderr, "Usage:\n\t./sim [-t <time-step=%.3f>]", dt);
 			abort();
 		default:
 			break;
 		}
 	}
 
-	return std::make_tuple(dt, horizon, steps);
+	return dt;
 }
 
 void single_unicycle(const float dt)
@@ -561,9 +552,8 @@ int main(int argc, char **argv)
 	// Set a pseudorandom seed for reproducibility of results.
 	srand((unsigned int)time(0));
 
-	float dt;
-	size_t horizon, steps;
-	std::tie(dt, horizon, steps) = parse_args(argc, argv);
+	// Determine the time-step at runtime with a default of 0.1.
+	float dt = parse_args(argc, argv);
 
 	// single_unicycle(dt);
 	two_unicycles(dt);
